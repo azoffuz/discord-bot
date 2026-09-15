@@ -64,8 +64,39 @@ for (const file of eventFiles) {
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+let botLoginError = null;
+let botLoginAttempts = 0;
+
 app.get('/', (req, res) => {
-  const status = client.isReady() ? 'Faol (Online)' : 'Ishga tushmoqda...';
+  const isReady = client.isReady();
+  const token = process.env.DISCORD_TOKEN;
+  let statusText = 'Ishga tushmoqda...';
+  let statusColor = '#f59e0b'; // sariq
+  let errorAdvice = '';
+
+  if (isReady) {
+    statusText = 'Faol (Online)';
+    statusColor = '#4ade80'; // yashil
+  } else if (!token || token === 'your_bot_token_here') {
+    statusText = 'Xatolik: DISCORD_TOKEN topilmadi!';
+    statusColor = '#ef4444'; // qizil
+    errorAdvice = '<div style="margin-top: 1rem; padding: 0.8rem; background: #450a0a; border-radius: 8px; border: 1px solid #dc2626; color: #fca5a5; font-size: 0.85rem; text-align: left;"><strong>⚠️ Sabab:</strong> Render.com da <code>DISCORD_TOKEN</code> Environment Variable kiritilmagan. Iltimos, Render Dashboard -> Environment bo\'limiga bot tokenini kiriting.</div>';
+  } else if (botLoginError) {
+    statusText = `Ulanishda xatolik: ${botLoginError}`;
+    statusColor = '#ef4444'; // qizil
+
+    let advice = 'Bot Discord API ga ulana olmadi.';
+    if (botLoginError.includes('DisallowedIntents') || botLoginError.includes('intent')) {
+      advice = '<strong>⚠️ INTENTS XATOLIGI:</strong> Discord Developer Portal da Privileged Gateway Intents yoqilmagan!<br><br>👉 <strong>Yechim:</strong><br>1. <a href="https://discord.com/developers/applications" target="_blank" style="color: #38bdf8;">Discord Developer Portal</a> ga kiring.<br>2. Botingizni tanlang -> <strong>Bot</strong> bo\'limiga o\'ting.<br>3. Pastga tushib <strong>Privileged Gateway Intents</strong> bo\'limidagi <strong>PRESENCE INTENT</strong>, <strong>SERVER MEMBERS INTENT</strong> va <strong>MESSAGE CONTENT INTENT</strong> larni yoqing va <strong>Save Changes</strong> ni bosing!';
+    } else if (botLoginError.includes('An invalid token') || botLoginError.includes('token') || botLoginError.includes('401')) {
+      advice = '<strong>⚠️ TOKEN XATOLIGI:</strong> Kiritilgan Discord Token noto\'g\'ri yoki eskirgan.<br><br>👉 <strong>Yechim:</strong> Discord Developer Portal -> Bot bo\'limidan <strong>Reset Token</strong> qilib, yangi tokenni Render.com Environment ga kiriting va qayta deploy qiling.';
+    } else if (botLoginError.includes('429') || botLoginError.includes('rate limit')) {
+      advice = '<strong>⚠️ RATE LIMIT:</strong> Render.com serverining IP manzili vaqtinchalik Discord tomonidan cheklovga tushgan. Bot 30 soniyadan so\'ng avtomatik qayta ulanishga harakat qiladi yoki Render da "Manual Deploy" -> "Clear build cache & deploy" qiling.';
+    }
+
+    errorAdvice = `<div style="margin-top: 1rem; padding: 0.9rem; background: #450a0a; border-radius: 8px; border: 1px solid #dc2626; color: #fecaca; font-size: 0.85rem; text-align: left;">${advice}</div>`;
+  }
+
   const sbStatus = storage.getSupabaseStatus();
 
   const sbBadge = sbStatus.connected
@@ -79,11 +110,11 @@ app.get('/', (req, res) => {
         <title>Cleva - Discord Bot Status</title>
         <meta charset="utf-8">
         <style>
-          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f172a; color: #f8fafc; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-          .card { background: #1e293b; padding: 2.5rem 3rem; border-radius: 14px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); text-align: center; border: 1px solid #334155; max-width: 460px; }
+          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f172a; color: #f8fafc; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 1rem; box-sizing: border-box; }
+          .card { background: #1e293b; padding: 2.5rem 2rem; border-radius: 14px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); text-align: center; border: 1px solid #334155; max-width: 480px; width: 100%; }
           .badge { display: inline-block; padding: 0.35rem 0.9rem; border-radius: 9999px; font-weight: bold; font-size: 0.85rem; margin: 0.3rem 0.2rem; }
           .badge-server { background: #38bdf8; color: #082f49; }
-          h1 { margin: 0.8rem 0 0.5rem; color: #38bdf8; }
+          h1 { margin: 0.8rem 0 0.5rem; color: #38bdf8; font-size: 1.6rem; }
           p { color: #94a3b8; margin: 0.5rem 0; font-size: 0.95rem; }
           .db-box { margin-top: 1.2rem; padding: 0.8rem; background: #0f172a; border-radius: 8px; border: 1px solid #334155; font-size: 0.85rem; color: #cbd5e1; }
         </style>
@@ -95,8 +126,9 @@ app.get('/', (req, res) => {
             ${sbBadge}
           </div>
           <h1>🤖 Cleva — Discord Bot</h1>
-          <p>Bot holati: <strong style="color: #4ade80;">${status}</strong></p>
-          <p>Bot nomi: <strong>${client.user ? client.user.tag : 'Cleva'}</strong></p>
+          <p>Bot holati: <strong style="color: ${statusColor};">${statusText}</strong></p>
+          ${errorAdvice}
+          <p style="margin-top: 1rem;">Bot nomi: <strong>${client.user ? client.user.tag : 'Cleva'}</strong></p>
           <p>Serverlar soni: <strong>${client.guilds?.cache.size || 0}</strong></p>
           <div class="db-box">
             <strong>Baza holati:</strong> ${sbStatus.message}
@@ -324,12 +356,45 @@ app.listen(PORT, () => {
 });
 
 // 5. BAZANI TIKLASH VA DISCORD GA ULANISH
+async function loginDiscord(token) {
+  botLoginAttempts++;
+  try {
+    console.log(`⏳ Discord ga ulanishga urinish (#${botLoginAttempts})...`);
+    await client.login(token);
+    botLoginError = null;
+    console.log('✅ Discord bot muvaffaqiyatli ulandi!');
+  } catch (err) {
+    botLoginError = err.message || String(err);
+    console.error(`❌ Bot tizimga kira olmadi (Login Error #${botLoginAttempts}):`, botLoginError);
+
+    // Agar intents xatosi yoki token xatosi bo'lmasa (masalan tarmoq yoki 429 bo'lsa), 30 soniyadan so'ng qayta ulanishga urinish
+    if (!botLoginError.includes('DisallowedIntents') && !botLoginError.includes('token')) {
+      console.log('🔄 30 soniyadan so\'ng qayta ulanishga harakat qilinadi...');
+      setTimeout(() => {
+        if (!client.isReady()) loginDiscord(token);
+      }, 30000);
+    }
+  }
+}
+
 async function startBot() {
-  await storage.init();
+  try {
+    // 5 soniyalik xavfsiz timeout bilan Supabase ni yuklash (agar internet/Supabase qotib qolsa bot to'xtab qolmasligi uchun)
+    await Promise.race([
+      storage.init(),
+      new Promise(resolve => setTimeout(() => {
+        console.warn('⚠️ Supabase ulanishi 5 soniyadan oshdi, lokal xotira bilan davom etilmoqda.');
+        resolve();
+      }, 5000))
+    ]);
+  } catch (err) {
+    console.error('Storage init xatosi:', err);
+  }
 
   const token = process.env.DISCORD_TOKEN;
 
   if (!token || token === 'your_bot_token_here') {
+    botLoginError = 'DISCORD_TOKEN Environment Variable topilmadi!';
     console.warn('⚠️ DIQQAT: .env faylida DISCORD_TOKEN belgilanmagan! Bot ulanmadi, lekin Web Server faol turibdi.');
   } else {
     // Buyruqlarni avtomatik ro'yxatdan o'tkazish
@@ -337,9 +402,7 @@ async function startBot() {
       deployCommands().catch(err => console.error('Avto-deploy xatosi:', err));
     }
 
-    client.login(token).catch(err => {
-      console.error('❌ Bot tizimga kira olmadi (Login Error):', err.message);
-    });
+    loginDiscord(token);
   }
 }
 
