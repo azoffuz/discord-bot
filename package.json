@@ -4,8 +4,8 @@
   "description": "Cleva - Multi-functional Discord bot with moderation, logs, welcome system, tickets and 24/7 Render support",
   "main": "src/index.js",
   "scripts": {
-    "start": "node src/index.js",
-    "deploy": "node src/deploy-commands.js"
+    "start": "node --dns-result-order=ipv4first src/index.js",
+    "deploy": "node --dns-result-order=ipv4first src/deploy-commands.js"
   },
   "keywords": [
     "discord",
