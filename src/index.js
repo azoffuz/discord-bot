@@ -28,6 +28,33 @@ const client = new Client({
   ]
 });
 
+// Shard va Xatolik Tinglovchilari (Ulanish xatolarini ushlash)
+client.on('error', err => {
+  console.error('❌ Discord Client Xatosi:', err.message);
+  botLoginError = err.message || String(err);
+});
+
+client.on('shardError', (err, shardId) => {
+  console.error(`❌ Shard #${shardId} Xatosi:`, err.message);
+  botLoginError = err.message || String(err);
+});
+
+client.on('shardDisconnect', (event, shardId) => {
+  console.error(`❌ Shard #${shardId} Disconnected with code ${event.code}: ${event.reason || 'Sabab ko\'rsatilmadi'}`);
+  if (event.code === 4014) {
+    botLoginError = 'Disallowed Intents (Code 4014): Discord Developer Portal da Privileged Gateway Intents (Server Members & Message Content) ni yoqing!';
+  } else if (event.code === 4004) {
+    botLoginError = 'Authentication Failed (Code 4004): Discord Token noto\'g\'ri!';
+  } else {
+    botLoginError = `Shard uzildi (Code ${event.code}): ${event.reason || 'Noma\'lum sabab'}`;
+  }
+});
+
+client.on('ready', () => {
+  botLoginError = null;
+  console.log(`🤖 Cleva boti muvaffaqiyatli ishga tushdi: ${client.user.tag}`);
+});
+
 client.commands = new Collection();
 
 // 2. BUYRUQLARNI YUKLASH (Commands Loader)
@@ -374,15 +401,20 @@ async function loginDiscord(token) {
   botLoginAttempts++;
   try {
     console.log(`⏳ Discord ga ulanishga urinish (#${botLoginAttempts})...`);
-    await client.login(token);
+    await Promise.race([
+      client.login(token),
+      new Promise((_, reject) => setTimeout(() => {
+        reject(new Error('Discord Gateway javob bermadi (25 soniyalik Timeout). Tarmoq yoki token/intents muammosi.'));
+      }, 25000))
+    ]);
     botLoginError = null;
     console.log('✅ Discord bot muvaffaqiyatli ulandi!');
   } catch (err) {
     botLoginError = err.message || String(err);
     console.error(`❌ Bot tizimga kira olmadi (Login Error #${botLoginAttempts}):`, botLoginError);
 
-    // Agar intents xatosi yoki token xatosi bo'lmasa (masalan tarmoq yoki 429 bo'lsa), 30 soniyadan so'ng qayta ulanishga urinish
-    if (!botLoginError.includes('DisallowedIntents') && !botLoginError.includes('token')) {
+    // Agar intents xatosi yoki token xatosi bo'lmasa, 30 soniyadan so'ng qayta ulanishga urinish
+    if (!botLoginError.includes('DisallowedIntents') && !botLoginError.includes('token') && !botLoginError.includes('4004') && !botLoginError.includes('4014')) {
       console.log('🔄 30 soniyadan so\'ng qayta ulanishga harakat qilinadi...');
       setTimeout(() => {
         if (!client.isReady()) loginDiscord(token);
