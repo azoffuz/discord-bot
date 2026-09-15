@@ -85,9 +85,13 @@ module.exports = {
           {
             name: '`/audit-log [tur] [soni]`',
             value: 'Serverda kim xabarlarni o\'chirgani yoki Discord AutoMod bloklaganini tekshirish.'
+          },
+          {
+            name: '`/addxp user:[a\'zo] amount:[XP] [reason]`',
+            value: 'A\'zoga XP qo\'shadi, uning darajasi (Level) va Leaderboard reytingini oshiradi (Faqat Administrator).'
           }
         )
-        .setFooter({ text: 'Ruxsat: Manage Roles, Moderate Members, Manage Channels, Manage Messages, View Audit Log' }),
+        .setFooter({ text: 'Ruxsat: Administrator, Manage Roles, Moderate Members, Manage Channels' }),
 
       config: new EmbedBuilder()
         .setColor(0x57F287)

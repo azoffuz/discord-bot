@@ -504,6 +504,63 @@ module.exports = {
     };
   },
 
+  giveUserXP(guildId, userId, amount) {
+    const settings = this.getGuildSettings(guildId);
+    if (!settings.leveling) {
+      settings.leveling = {
+        enabled: true,
+        channelId: null,
+        users: {}
+      };
+    }
+    if (!settings.leveling.users) settings.leveling.users = {};
+    if (!settings.leveling.users[userId]) {
+      settings.leveling.users[userId] = {
+        xp: 0,
+        level: 1,
+        messages: 0,
+        lastXp: 0
+      };
+    }
+
+    const userData = settings.leveling.users[userId];
+    userData.xp = (userData.xp || 0) + Number(amount);
+
+    let requiredXP = (userData.level || 1) * 100;
+    let leveledUp = false;
+    const oldLevel = userData.level || 1;
+
+    while (userData.xp >= requiredXP) {
+      userData.xp -= requiredXP;
+      userData.level = (userData.level || 1) + 1;
+      leveledUp = true;
+      requiredXP = userData.level * 100;
+    }
+
+    this.updateGuildSettings(guildId, { leveling: settings.leveling });
+
+    const allUsers = Object.entries(settings.leveling.users)
+      .map(([id, data]) => ({
+        id,
+        level: data.level || 1,
+        xp: data.xp || 0,
+        messages: data.messages || 0
+      }))
+      .sort((a, b) => b.level - a.level || b.xp - a.xp);
+
+    const rankIndex = allUsers.findIndex(u => u.id === userId);
+
+    return {
+      leveledUp,
+      oldLevel,
+      newLevel: userData.level,
+      currentXP: userData.xp,
+      requiredXP,
+      rank: rankIndex !== -1 ? rankIndex + 1 : 1,
+      addedXP: amount
+    };
+  },
+
   // ===================== MEGA TEAM ARXIVI METODLARI =====================
   setTeamArchiveSettings(guildId, newSettings) {
     const settings = this.getGuildSettings(guildId);
