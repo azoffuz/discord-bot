@@ -2,6 +2,7 @@ require('dotenv').config();
 const { REST, Routes } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
+const log = require('./utils/log');
 
 async function deployCommands() {
   const commands = [];
@@ -19,7 +20,7 @@ async function deployCommands() {
       if ('data' in command && 'execute' in command) {
         commands.push(command.data.toJSON());
       } else {
-        console.warn(`[OGOHLANTIRISH] ${filePath} faylida 'data' yoki 'execute' xossasi yetishmaydi.`);
+        log.warn(`[OGOHLANTIRISH] ${filePath} faylida 'data' yoki 'execute' xossasi yetishmaydi.`);
       }
     }
   }
@@ -29,14 +30,14 @@ async function deployCommands() {
   const guildId = process.env.ALLOWED_GUILD_ID || process.env.GUILD_ID;
 
   if (!token || !clientId) {
-    console.error('❌ Xatolik: DISCORD_TOKEN yoki CLIENT_ID o\'zgaruvchilari kiritilmagan!');
+    log.error('❌ Xatolik: DISCORD_TOKEN yoki CLIENT_ID o\'zgaruvchilari kiritilmagan!');
     return false;
   }
 
   const rest = new REST().setToken(token);
 
   try {
-    console.log(`⏳ ${commands.length} ta slash buyruq Discord API ga ro'yxatdan o'tkazilmoqda...`);
+    log.info(`⏳ ${commands.length} ta slash buyruq Discord API ga ro'yxatdan o'tkazilmoqda...`);
 
     const rawAllowed = process.env.ALLOWED_GUILD_ID || process.env.GUILD_ID || '';
     const allowedGuilds = rawAllowed
@@ -46,9 +47,9 @@ async function deployCommands() {
 
     if (allowedGuilds.length > 0) {
       // Dublikatlarni (2 tadan bo'lib qolishini) yo'qotish uchun global buyruqlarni tozalaymiz
-      console.log('🧹 Dublikat bo\'lmasligi uchun eski global buyruqlar tozalanmoqda...');
+      log.info('🧹 Dublikat bo\'lmasligi uchun eski global buyruqlar tozalanmoqda...');
       await rest.put(Routes.applicationCommands(clientId), { body: [] }).catch(err => {
-        console.warn('Global buyruqlarni tozalashda ogohlantirish:', err.message);
+        log.warn('Global buyruqlarni tozalashda ogohlantirish:', err.message);
       });
 
       // Har bir ruxsat berilgan server uchun buyruqlarni ro'yxatdan o'tkazish
@@ -57,7 +58,7 @@ async function deployCommands() {
           Routes.applicationGuildCommands(clientId, gId),
           { body: commands }
         );
-        console.log(`✅ ${data.length} ta buyruq server (${gId}) uchun ro'yxatdan o'tdi (dublikatlar olib tashlandi)!`);
+        log.info(`✅ ${data.length} ta buyruq server (${gId}) uchun ro'yxatdan o'tdi (dublikatlar olib tashlandi)!`);
       }
     } else {
       // Global ro'yxatdan o'tkazish (barcha serverlar uchun)
@@ -65,12 +66,12 @@ async function deployCommands() {
         Routes.applicationCommands(clientId),
         { body: commands }
       );
-      console.log(`✅ ${data.length} ta buyruq global (barcha serverlar) uchun ro'yxatdan o'tdi!`);
+      log.info(`✅ ${data.length} ta buyruq global (barcha serverlar) uchun ro'yxatdan o'tdi!`);
     }
 
     return true;
   } catch (error) {
-    console.error('❌ Buyruqlarni ro\'yxatdan o\'tkazishda xatolik:', error);
+    log.error('❌ Buyruqlarni ro\'yxatdan o\'tkazishda xatolik:', error);
     return false;
   }
 }

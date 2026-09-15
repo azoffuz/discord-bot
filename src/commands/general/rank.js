@@ -38,7 +38,7 @@ module.exports = {
     const rankEmbed = new EmbedBuilder()
       .setColor(0x5865F2)
       .setTitle(`🏆 ${targetUser.displayName || targetUser.username} — Faollik Profili`)
-      .setThumbnail(targetUser.displayAvatarURL({ dynamic: true, size: 512 }))
+      .setThumbnail(targetUser.displayAvatarURL({ size: 512 }))
       .addFields(
         {
           name: '⭐ Daraja (Level)',

@@ -40,7 +40,7 @@ module.exports = {
     const embed = new EmbedBuilder()
       .setColor(0x5865F2)
       .setTitle(`🏰 ${guild.name} — Server Ma'lumotlari`)
-      .setThumbnail(guild.iconURL({ dynamic: true, size: 1024 }))
+      .setThumbnail(guild.iconURL({ size: 1024 }))
       .addFields(
         {
           name: '👑 Server Egasi',
@@ -87,7 +87,7 @@ module.exports = {
       .setTimestamp();
 
     if (guild.bannerURL()) {
-      embed.setImage(guild.bannerURL({ dynamic: true, size: 2048 }));
+      embed.setImage(guild.bannerURL({ size: 2048 }));
     }
 
     await interaction.editReply({ embeds: [embed] });

@@ -1,4 +1,5 @@
-const { SlashCommandBuilder, PermissionFlagsBits, ChannelType, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, ChannelType, EmbedBuilder, MessageFlags } = require('discord.js');
+const log = require('../../utils/log');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -56,7 +57,7 @@ module.exports = {
     if (!permissions.has(PermissionFlagsBits.SendMessages) || !permissions.has(PermissionFlagsBits.EmbedLinks)) {
       return interaction.reply({
         content: `❌ Mening <#${targetChannel.id}> kanaliga Embed yuborish uchun ruxsatim yetarli emas!`,
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
     }
 
@@ -91,13 +92,13 @@ module.exports = {
 
       await interaction.reply({
         content: `✅ Embed xabar muvaffaqiyatli <#${targetChannel.id}> kanaliga yuborildi!`,
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
     } catch (error) {
-      console.error('Embed buyrug\'i xatosi:', error);
+      log.error('Embed buyrug\'i xatosi:', error);
       await interaction.reply({
         content: `❌ Embed yuborishda xatolik yuz berdi: ${error.message}`,
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
     }
   }

@@ -1,4 +1,5 @@
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags, PermissionFlagsBits } = require('discord.js');
+const log = require('./log');
 
 // Faol LFG sessiyalari xotirasi: lfgId -> lfgData
 const activeLfgs = new Map();
@@ -145,7 +146,7 @@ async function handleLfgInteraction(interaction) {
     if (member?.voice?.channelId && targetVoiceChannel) {
       if (member.voice.channelId !== targetVoiceChannel.id) {
         await member.voice.setChannel(targetVoiceChannel).catch(err => {
-          console.warn('[LFG VOICE KO\'CHIRISH XATOSI]:', err.message);
+          log.warn('[LFG VOICE KO\'CHIRISH XATOSI]:', err.message);
         });
         movedVoice = true;
       }

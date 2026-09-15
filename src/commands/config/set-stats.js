@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, PermissionFlagsBits, ChannelType, EmbedBuilder, MessageFlags } = require('discord.js');
 const storage = require('../../config/storage');
 const { updateGuildStats } = require('../../utils/statsUpdater');
+const log = require('../../utils/log');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -400,7 +401,7 @@ module.exports = {
 
       return interaction.editReply({ embeds: [successEmbed] });
     } catch (err) {
-      console.error('[SET-STATS XATOSI]:', err);
+      log.error('[SET-STATS XATOSI]:', err);
       return interaction.editReply({
         content: `❌ Statistikani sozlashda xatolik yuz berdi: ${err.message}`
       });

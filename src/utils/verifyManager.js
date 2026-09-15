@@ -7,6 +7,7 @@ const {
 } = require('discord.js');
 const storage = require('../config/storage');
 const logger = require('./logger');
+const log = require('./log');
 
 async function handleVerifyInteraction(interaction) {
   const { guild } = interaction;
@@ -62,7 +63,7 @@ async function handleVerifyInteraction(interaction) {
           flags: MessageFlags.Ephemeral
         });
       } catch (err) {
-        console.error('[VERIFY BUTTON ERROR]:', err);
+        log.error('[VERIFY BUTTON ERROR]:', err);
         await interaction.reply({
           content: '❌ Rolni berishda xatolik yuz berdi. Iltimos, administratorga murojaat qiling.',
           flags: MessageFlags.Ephemeral
@@ -148,7 +149,7 @@ async function handleVerifyInteraction(interaction) {
             content: `🎉 **Kod to'g'ri!** Siz muvaffaqiyatli tekshiruvdan o'tdingiz va server a'zosi bo'ldingiz! Sizga <@&${role.id}> roli berildi.`
           });
         } catch (err) {
-          console.error('[VERIFY MODAL CODE ERROR]:', err);
+          log.error('[VERIFY MODAL CODE ERROR]:', err);
           return interaction.editReply({
             content: '❌ Rolni berishda xatolik yuz berdi. Iltimos, administratorga murojaat qiling.'
           });
@@ -189,7 +190,7 @@ async function handleVerifyInteraction(interaction) {
             content: `🎉 **To'g'ri javob!** Siz muvaffaqiyatli tekshiruvdan o'tdingiz va server a'zosi bo'ldingiz! Sizga <@&${role.id}> roli berildi.`
           });
         } catch (err) {
-          console.error('[VERIFY MODAL MATH ERROR]:', err);
+          log.error('[VERIFY MODAL MATH ERROR]:', err);
           return interaction.editReply({
             content: '❌ Rolni berishda xatolik yuz berdi. Iltimos, administratorga murojaat qiling.'
           });

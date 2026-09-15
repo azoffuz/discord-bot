@@ -1,9 +1,40 @@
 const { EmbedBuilder, PermissionFlagsBits } = require('discord.js');
 const storage = require('../config/storage');
+const log = require('./log');
 
-// Foydalanuvchilarning ovozli xonadagi faol sessiyalari
+// Foydalanuvchilarning ovozli xonadagi faol sessiyalari (tez kesh).
 // key: `${guildId}_${userId}`, value: startTime (ms)
+// Haqiqiy manba - storage dagi `voiceSessionStart`: deploy/restart dan keyin
+// bu Map bo'shab qoladi, shuning uchun u yerdan tiklanadi.
 const voiceSessions = new Map();
+
+const sessionKeyOf = (guildId, userId) => `${guildId}_${userId}`;
+
+/** Sessiya boshlanishini oladi: avval keshdan, topilmasa saqlangan qiymatdan. */
+function getSessionStart(guildId, userId) {
+  const key = sessionKeyOf(guildId, userId);
+  if (voiceSessions.has(key)) return voiceSessions.get(key);
+
+  const stored = storage.getMemberActivity(guildId, userId).voiceSessionStart;
+  if (stored) {
+    voiceSessions.set(key, stored);
+    return stored;
+  }
+  return null;
+}
+
+/** Sessiyani boshlaydi (yoki qayta boshlaydi) va diskka yozadi. */
+function startSession(guildId, userId, at) {
+  voiceSessions.set(sessionKeyOf(guildId, userId), at);
+  storage.updateMemberActivity(guildId, userId, { voiceSessionStart: at });
+}
+
+/** Sessiyani yopadi va o'tgan vaqtni qaytaradi (yozmaydi). */
+function endSession(guildId, userId, at) {
+  const start = getSessionStart(guildId, userId);
+  voiceSessions.delete(sessionKeyOf(guildId, userId));
+  return start ? Math.max(0, at - start) : 0;
+}
 
 /**
  * Toshkent vaqti (UTC+5) bo'yicha bugungi sana satrini qaytaradi (YYYY-MM-DD)
@@ -57,12 +88,11 @@ function getCleanActivity(guildId, userId) {
  */
 function getRealTimeActivity(guildId, userId) {
   const activity = getCleanActivity(guildId, userId);
-  const sessionKey = `${guildId}_${userId}`;
 
   let extraVoiceMs = 0;
-  if (voiceSessions.has(sessionKey)) {
-    const startTime = voiceSessions.get(sessionKey);
-    extraVoiceMs = Date.now() - startTime;
+  const startTime = getSessionStart(guildId, userId);
+  if (startTime) {
+    extraVoiceMs = Math.max(0, Date.now() - startTime);
   }
 
   const totalVoiceMs = (activity.todayVoiceMs || 0) + extraVoiceMs;
@@ -141,7 +171,7 @@ async function checkAndAssignActiveRole(guild, member) {
                 `• 💬 Chatda: **${activity.messages} ta xabar** (talab: ${targetMessages} ta)\n\n` +
                 `💡 *Eslatma: Rolni saqlab qolish uchun ertasiga ham serverga kirib faol bo'lishni unutmang!*`
               )
-              .setThumbnail(member.user.displayAvatarURL({ dynamic: true, size: 256 }))
+              .setThumbnail(member.user.displayAvatarURL({ size: 256 }))
               .setFooter({ text: 'Cleva • Daily Active Role System' })
               .setTimestamp();
 
@@ -153,7 +183,7 @@ async function checkAndAssignActiveRole(guild, member) {
         }
         return true;
       } catch (err) {
-        console.error('[ACTIVE ROLE BERISH XATOSI]:', err);
+        log.error('[ACTIVE ROLE BERISH XATOSI]:', err);
       }
     } else {
       // Agar a'zoda rol allaqachon bo'lsa, bugungi faollik sanasini yangilab qo'yish
@@ -211,46 +241,74 @@ async function handleVoiceUpdate(oldState, newState) {
 
   // 1. Foydalanuvchi ovozli xonadan butunlay chiqdi
   if (oldState.channelId && !newState.channelId) {
-    if (voiceSessions.has(sessionKey)) {
-      const startTime = voiceSessions.get(sessionKey);
-      const elapsed = Math.max(0, now - startTime);
-      voiceSessions.delete(sessionKey);
-
-      const activity = getCleanActivity(guild.id, userId);
-      const newVoiceMs = (activity.todayVoiceMs || 0) + elapsed;
-      storage.updateMemberActivity(guild.id, userId, {
-        todayVoiceMs: newVoiceMs
-      });
-
-      await checkAndAssignActiveRole(guild, member);
-    }
+    const elapsed = endSession(guild.id, userId, now);
+    const activity = getCleanActivity(guild.id, userId);
+    storage.updateMemberActivity(guild.id, userId, {
+      todayVoiceMs: (activity.todayVoiceMs || 0) + elapsed,
+      voiceSessionStart: null
+    });
+    if (elapsed > 0) await checkAndAssignActiveRole(guild, member);
     return;
   }
 
   // 2. Foydalanuvchi ovozli xonaga birinchi marta kirdi
   if (!oldState.channelId && newState.channelId) {
-    voiceSessions.set(sessionKey, now);
+    startSession(guild.id, userId, now);
     return;
   }
 
   // 3. Foydalanuvchi bir xonadan boshqa xonaga ko'chdi
   if (oldState.channelId && newState.channelId && oldState.channelId !== newState.channelId) {
-    if (voiceSessions.has(sessionKey)) {
-      const startTime = voiceSessions.get(sessionKey);
-      const elapsed = Math.max(0, now - startTime);
-      voiceSessions.set(sessionKey, now);
+    const elapsed = endSession(guild.id, userId, now);
+    const activity = getCleanActivity(guild.id, userId);
+    voiceSessions.set(sessionKey, now);
+    storage.updateMemberActivity(guild.id, userId, {
+      todayVoiceMs: (activity.todayVoiceMs || 0) + elapsed,
+      voiceSessionStart: now
+    });
+    if (elapsed > 0) await checkAndAssignActiveRole(guild, member);
+  }
+}
 
-      const activity = getCleanActivity(guild.id, userId);
-      const newVoiceMs = (activity.todayVoiceMs || 0) + elapsed;
-      storage.updateMemberActivity(guild.id, userId, {
-        todayVoiceMs: newVoiceMs
-      });
+/**
+ * Bot qayta ishga tushganda ochiq qolgan ovozli sessiyalarni tiklash.
+ *
+ * - A'zo hali ham ovozli xonada bo'lsa: sessiya davom etadi (saqlangan
+ *   boshlanish vaqti keshga qaytariladi), ya'ni deploy vaqti yo'qolmaydi.
+ * - A'zo allaqachon chiqib ketgan bo'lsa: qachon chiqqani noma'lum, shuning
+ *   uchun sessiya hisoblanmasdan yopiladi (vaqtni to'qib chiqarmaymiz).
+ */
+async function restoreVoiceSessions(client) {
+  let resumed = 0;
+  let closed = 0;
 
-      await checkAndAssignActiveRole(guild, member);
-    } else {
-      voiceSessions.set(sessionKey, now);
+  for (const [, guild] of client.guilds.cache) {
+    const settings = storage.getActiveRoleSettings(guild.id);
+    if (!settings.enabled) continue;
+
+    for (const [userId, data] of Object.entries(storage.getAllActiveMembers(guild.id))) {
+      if (!data.voiceSessionStart) continue;
+
+      const stillConnected = Boolean(guild.voiceStates.cache.get(userId)?.channelId);
+      if (stillConnected) {
+        voiceSessions.set(sessionKeyOf(guild.id, userId), data.voiceSessionStart);
+        resumed++;
+      } else {
+        storage.updateMemberActivity(guild.id, userId, { voiceSessionStart: null });
+        closed++;
+      }
     }
   }
+
+  if (resumed || closed) {
+    log.info(`🎙️ Ovozli sessiyalar tiklandi: ${resumed} ta davom etmoqda, ${closed} ta yopildi.`);
+  }
+  return { resumed, closed };
+}
+
+/** A'zo serverdan chiqsa keshda ochiq sessiya qolib ketmasin. */
+function forgetMember(guildId, userId) {
+  voiceSessions.delete(sessionKeyOf(guildId, userId));
 }
 
 /**
@@ -312,7 +370,7 @@ async function evaluateDailyInactivity(client) {
             }
           }
         } catch (err) {
-          console.error(`[ACTIVE ROLE OLIB TASHLASH XATOSI] (${userId}):`, err.message);
+          log.error(`[ACTIVE ROLE OLIB TASHLASH XATOSI] (${userId}):`, err.message);
         }
       }
     }
@@ -320,6 +378,8 @@ async function evaluateDailyInactivity(client) {
 }
 
 module.exports = {
+  restoreVoiceSessions,
+  forgetMember,
   getTodayDateStr,
   getYesterdayDateStr,
   getRealTimeActivity,

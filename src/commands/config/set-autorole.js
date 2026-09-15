@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, MessageFlags } = require('discord.js');
 const storage = require('../../config/storage');
 
 module.exports = {
@@ -27,7 +27,7 @@ module.exports = {
       storage.updateGuildSettings(guild.id, { autoRoleId: null });
       return interaction.reply({
         content: '✅ Auto-role tizimi o\'chirildi.',
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
     }
 
@@ -37,7 +37,7 @@ module.exports = {
         content: current.autoRoleId
           ? `ℹ️ Hozirgi auto-role: <@&${current.autoRoleId}>.\nO'zgartirish uchun: \`/set-autorole role:@Rol\` deb yozing.`
           : 'ℹ️ Serverda auto-role belgilanmagan.\nBelgilash uchun: \`/set-autorole role:@Rol\` deb yozing.',
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
     }
 
@@ -46,7 +46,7 @@ module.exports = {
     if (role.position >= botMember.roles.highest.position) {
       return interaction.reply({
         content: `❌ Men bu rolni (${role.name}) avtomatik bera olmayman, chunki u mening eng yuqori rolimdan yuqori yoki teng. Bot rolimni Server sozlamalarida yuqoriroqqa surib qo'ying.`,
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
     }
 

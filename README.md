@@ -93,10 +93,59 @@ Render.com har safar yangi deploy bo'lganda server diskini tozalaydi. Barcha soz
    -- RLS ni o'chirish (Bot ma'lumotlarni saqlay olishi uchun):
    alter table guild_settings disable row level security;
    ```
-3. **Project Settings -> API** bo'limidan:
+3. **Ajratilgan jadvallar (tavsiya etiladi).** Daraja (XP), kunlik faollik va
+   ogohlantirishlar har bir xabarda o'zgaradi. Ular `guild_settings` blobi
+   ichida bo'lsa, bitta XP uchun ham butun server sozlamalari qayta yoziladi.
+   Quyidagi kodni ham ishga tushiring - bot ularni avtomatik ko'chirib oladi:
+   ```sql
+   create table if not exists guild_levels (
+     guild_id text not null,
+     user_id  text not null,
+     xp       integer not null default 0,
+     level    integer not null default 1,
+     messages integer not null default 0,
+     last_xp  bigint  not null default 0,
+     primary key (guild_id, user_id)
+   );
+
+   create table if not exists guild_activity (
+     guild_id         text not null,
+     user_id          text not null,
+     today_voice_ms   bigint  not null default 0,
+     today_messages   integer not null default 0,
+     activity_date    text,
+     last_active_date text,
+     has_role         boolean not null default false,
+     -- Ochiq ovozli sessiya boshlangan vaqt (ms). Deploy/restart dan keyin
+     -- tiklash uchun kerak; xonadan chiqilganda null bo'ladi.
+     voice_session_start bigint,
+     primary key (guild_id, user_id)
+   );
+
+   create table if not exists guild_warns (
+     id           text primary key,
+     guild_id     text not null,
+     user_id      text not null,
+     reason       text,
+     moderator_id text,
+     created_at   text not null
+   );
+   create index if not exists guild_warns_lookup on guild_warns (guild_id, user_id);
+
+   alter table guild_levels   disable row level security;
+   alter table guild_activity disable row level security;
+   alter table guild_warns    disable row level security;
+
+   -- Jadvallarni oldinroq yaratgan bo'lsangiz, faqat shu qatorni qo'shing:
+   alter table guild_activity add column if not exists voice_session_start bigint;
+   ```
+   Bu qadam ixtiyoriy: jadvallar yaratilmasa bot eski usulda (blobda) ishlayveradi,
+   faqat sekinroq bo'ladi. Bot ishga tushganda qaysi rejimda ekani konsolda va
+   `/health` sahifasida ko'rinadi.
+4. **Project Settings -> API** bo'limidan:
    - **Project URL** ni oling (`SUPABASE_URL`)
    - **Project API Keys** dan `service_role` (yoki `anon public`) kalitini oling (`SUPABASE_KEY`)
-4. Ularni Render.com da **Environment Variables** ga qo'shing. Bo'ldi! Endi har qanday deployda ham hamma sozlamalar to'liq saqlanib qoladi.
+5. Ularni Render.com da **Environment Variables** ga qo'shing. Bo'ldi! Endi har qanday deployda ham hamma sozlamalar to'liq saqlanib qoladi.
 
 ---
 

@@ -3,15 +3,16 @@ const {
   EmbedBuilder,
   ActionRowBuilder,
   ButtonBuilder,
-  ButtonStyle
+  ButtonStyle,
+  MessageFlags
 } = require('discord.js');
 
 /**
  * Server Icon va Banner uchun Embed va Tugmalarni yasaydi
  */
 function buildServerEmbedsAndButtons(guild, view = 'icon') {
-  const iconUrl = guild.iconURL({ dynamic: true, size: 4096 });
-  const bannerUrl = guild.bannerURL({ dynamic: true, size: 4096 });
+  const iconUrl = guild.iconURL({ size: 4096 });
+  const bannerUrl = guild.bannerURL({ size: 4096 });
 
   let currentUrl = '';
   let title = '';
@@ -63,9 +64,9 @@ function buildServerEmbedsAndButtons(guild, view = 'icon') {
  * Foydalanuvchi avatari va banneri uchun Embed va Tugmalarni yasaydi
  */
 function buildUserAvatarEmbedsAndButtons(targetUser, member, fetchedUser, view = 'server', guild) {
-  const globalAvatar = targetUser.displayAvatarURL({ dynamic: true, size: 4096 });
-  const serverAvatar = member ? member.avatarURL({ dynamic: true, size: 4096 }) : null;
-  const userBanner = fetchedUser?.bannerURL ? fetchedUser.bannerURL({ dynamic: true, size: 4096 }) : null;
+  const globalAvatar = targetUser.displayAvatarURL({ size: 4096 });
+  const serverAvatar = member ? member.avatarURL({ size: 4096 }) : null;
+  const userBanner = fetchedUser?.bannerURL ? fetchedUser.bannerURL({ size: 4096 }) : null;
 
   const displayName = targetUser.displayName || targetUser.username;
   let currentImageUrl = '';
@@ -190,7 +191,7 @@ async function handleAvatarInteraction(interaction) {
 
     const targetUser = await client.users.fetch(targetUserId).catch(() => null);
     if (!targetUser) {
-      await interaction.reply({ content: '❌ Foydalanuvchi topilmadi.', ephemeral: true });
+      await interaction.reply({ content: '❌ Foydalanuvchi topilmadi.', flags: MessageFlags.Ephemeral });
       return true;
     }
 
@@ -235,17 +236,17 @@ module.exports = {
       if (!guild) {
         return interaction.reply({
           content: '❌ Ushbu buyruq faqat server ichida ishlaydi.',
-          ephemeral: true
+          flags: MessageFlags.Ephemeral
         });
       }
 
-      const iconUrl = guild.iconURL({ dynamic: true, size: 4096 });
-      const bannerUrl = guild.bannerURL({ dynamic: true, size: 4096 });
+      const iconUrl = guild.iconURL({ size: 4096 });
+      const bannerUrl = guild.bannerURL({ size: 4096 });
 
       if (!iconUrl && !bannerUrl) {
         return interaction.reply({
           content: '❌ Ushbu serverda rasm (icon) yoki banner o\'rnatilmagan.',
-          ephemeral: true
+          flags: MessageFlags.Ephemeral
         });
       }
 

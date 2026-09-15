@@ -3,6 +3,8 @@ const storage = require('../config/storage');
 const logger = require('../utils/logger');
 const { sendRoomControlPanel, activeTempChannels, tempChannelOwners } = require('../utils/tempVoiceManager');
 const { handleVoiceUpdate } = require('../utils/activityTracker');
+const { updateGuildStats } = require('../utils/statsUpdater');
+const log = require('../utils/log');
 
 module.exports = {
   name: 'voiceStateUpdate',
@@ -63,7 +65,7 @@ module.exports = {
         // 3. Xona ichiga Boshqaruv Panelini yuborish
         await sendRoomControlPanel(tempChannel, member);
       } catch (err) {
-        console.error('[TEMP-VOICE YARATISH XATOSI]:', err);
+        log.error('[TEMP-VOICE YARATISH XATOSI]:', err);
       }
     }
 
@@ -88,7 +90,6 @@ module.exports = {
 
     // 5. Ovozli xonalar statistikasi hisoblagichini yangilash
     if (oldState.channelId !== newState.channelId) {
-      const { updateGuildStats } = require('../utils/statsUpdater');
       updateGuildStats(guild);
     }
   }

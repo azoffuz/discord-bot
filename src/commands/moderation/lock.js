@@ -1,5 +1,6 @@
-const { SlashCommandBuilder, PermissionFlagsBits, ChannelType, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, ChannelType, EmbedBuilder, MessageFlags } = require('discord.js');
 const logger = require('../../utils/logger');
+const log = require('../../utils/log');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -29,7 +30,7 @@ module.exports = {
     if (!botMember.permissions.has(PermissionFlagsBits.ManageChannels)) {
       return interaction.reply({
         content: '❌ Botda kanallarni boshqarish (**Manage Channels**) ruxsati yo\'q!',
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
     }
 
@@ -50,7 +51,7 @@ module.exports = {
 
       await interaction.reply({
         content: `✅ <#${targetChannel.id}> kanali muvaffaqiyatli qulflandi!`,
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
 
       await logger.logModAction(
@@ -61,10 +62,10 @@ module.exports = {
         reason
       );
     } catch (error) {
-      console.error('Lock xatosi:', error);
+      log.error('Lock xatosi:', error);
       await interaction.reply({
         content: `❌ Kanalni qulflashda xatolik: ${error.message}`,
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
     }
   }

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Cleva - Discord Bot Status</title>
+    <meta charset="utf-8">
+    <style>
+      body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f172a; color: #f8fafc; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+      .card { background: #1e293b; padding: 2.5rem 3rem; border-radius: 14px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); text-align: center; border: 1px solid #334155; max-width: 460px; }
+      .badge { display: inline-block; padding: 0.35rem 0.9rem; border-radius: 9999px; font-weight: bold; font-size: 0.85rem; margin: 0.3rem 0.2rem; }
+      .badge-server { background: #38bdf8; color: #082f49; }
+      h1 { margin: 0.8rem 0 0.5rem; color: #38bdf8; }
+      p { color: #94a3b8; margin: 0.5rem 0; font-size: 0.95rem; }
+      .db-box { margin-top: 1.2rem; padding: 0.8rem; background: #0f172a; border-radius: 8px; border: 1px solid #334155; font-size: 0.85rem; color: #cbd5e1; }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <div>
+        <span class="badge badge-server">● 24/7 SERVER ONLINE</span>
+        {{supabaseBadge}}
+      </div>
+      <h1>🤖 Cleva — Discord Bot</h1>
+      <p>Bot holati: <strong style="color: #4ade80;">{{botStatus}}</strong></p>
+      <p>Bot nomi: <strong>{{botTag}}</strong></p>
+      <p>Serverlar soni: <strong>{{guildCount}}</strong></p>
+      <div class="db-box">
+        <strong>Baza holati:</strong> {{supabaseMessage}}
+      </div>
+      <div style="margin-top: 1.5rem; display: flex; gap: 0.8rem; justify-content: center; flex-wrap: wrap;">
+        <a href="{{inviteUrl}}" target="_blank" style="background: #5865F2; color: #ffffff; padding: 0.5rem 1rem; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 0.9rem;">👑 Serverga Qo'shilish</a>
+        <a href="/guide" style="background: #38bdf8; color: #082f49; padding: 0.5rem 1rem; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 0.9rem;">📖 To'liq Qo'llanma (Guide)</a>
+        <a href="/terms" style="background: #334155; color: #f8fafc; padding: 0.5rem 1rem; border-radius: 6px; text-decoration: none; font-size: 0.9rem;">Terms</a>
+        <a href="/privacy" style="background: #334155; color: #f8fafc; padding: 0.5rem 1rem; border-radius: 6px; text-decoration: none; font-size: 0.9rem;">Privacy</a>
+      </div>
+    </div>
+  </body>
+</html>

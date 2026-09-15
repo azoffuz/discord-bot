@@ -11,6 +11,8 @@ const {
   PermissionFlagsBits,
   MessageFlags
 } = require('discord.js');
+const storage = require('../config/storage');
+const log = require('./log');
 
 // Xona egalari va faol xonalar xotirasi
 const tempChannelOwners = new Map(); // channelId -> ownerId
@@ -81,10 +83,10 @@ async function sendRoomControlPanel(channel, member) {
       embeds: [embed],
       components: [row1, row2]
     }).catch(err => {
-      console.error('VC Panel yuborishda xatolik:', err.message);
+      log.error('VC Panel yuborishda xatolik:', err.message);
     });
   } catch (err) {
-    console.error('sendRoomControlPanel xatosi:', err);
+    log.error('sendRoomControlPanel xatosi:', err);
   }
 }
 
@@ -256,7 +258,7 @@ async function handleTempVoiceInteraction(interaction) {
     const finalName = rawName.slice(0, 32);
 
     await channel.setName(finalName).catch(err => {
-      console.warn('VC Rename xatosi:', err.message);
+      log.warn('VC Rename xatosi:', err.message);
     });
 
     await interaction.reply({
@@ -340,7 +342,6 @@ async function handleTempVoiceInteraction(interaction) {
       return true;
     }
 
-    const storage = require('../config/storage');
     const settings = storage.getGuildSettings(guild.id);
     const joinToCreateId = settings.tempVoice?.channelId;
     const categoryId = settings.tempVoice?.categoryId;

@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, MessageFlags } = require('discord.js');
 
 const NUMBER_EMOJIS = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣'];
 
@@ -61,7 +61,7 @@ module.exports = {
 
     await interaction.reply({
       content: '✅ So\'rovnoma yaratilmoqda...',
-      ephemeral: true
+      flags: MessageFlags.Ephemeral
     });
 
     const pollMessage = await interaction.channel.send({ embeds: [embed] });

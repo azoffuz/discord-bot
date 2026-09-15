@@ -1,5 +1,6 @@
-const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, MessageFlags } = require('discord.js');
 const logger = require('../../utils/logger');
+const log = require('../../utils/log');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -27,14 +28,14 @@ module.exports = {
     if (!targetMember) {
       return interaction.reply({
         content: '❌ Bu foydalanuvchi serverda topilmadi.',
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
     }
 
     if (!targetMember.communicationDisabledUntilTimestamp || targetMember.communicationDisabledUntilTimestamp <= Date.now()) {
       return interaction.reply({
         content: `ℹ️ ${targetUser.tag} hozirda mute qilinmagan.`,
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
     }
 
@@ -42,7 +43,7 @@ module.exports = {
     if (!targetMember.moderatable) {
       return interaction.reply({
         content: '❌ Men bu foydalanuvchining mutesini bekor qila olmayman (roli yuqori).',
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
     }
 
@@ -69,10 +70,10 @@ module.exports = {
         reason
       );
     } catch (error) {
-      console.error('Unmute xatosi:', error);
+      log.error('Unmute xatosi:', error);
       return interaction.reply({
         content: `❌ Unmute qilishda xatolik: ${error.message}`,
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
     }
   }

@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits, ChannelType, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, ChannelType, EmbedBuilder, MessageFlags } = require('discord.js');
 const storage = require('../../config/storage');
 
 module.exports = {
@@ -51,14 +51,14 @@ module.exports = {
         .setColor(0x57F287)
         .setTitle(`🎉 Xush kelibsiz! (Sinov ko'rinishi)`)
         .setDescription(rendered)
-        .setThumbnail(interaction.user.displayAvatarURL({ dynamic: true, size: 512 }))
+        .setThumbnail(interaction.user.displayAvatarURL({ size: 512 }))
         .setFooter({ text: `${guild.name} • A'zolar: ${guild.memberCount}` })
         .setTimestamp();
 
       return interaction.reply({
         content: `🔍 **Welcome xabarining sinov ko'rinishi:**`,
         embeds: [previewEmbed],
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
     }
 
@@ -103,7 +103,7 @@ module.exports = {
           }
         );
 
-      return interaction.reply({ embeds: [embed], ephemeral: true });
+      return interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
     }
 
     // Saqlash

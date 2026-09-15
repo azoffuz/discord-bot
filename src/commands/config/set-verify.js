@@ -9,6 +9,7 @@ const {
   MessageFlags
 } = require('discord.js');
 const storage = require('../../config/storage');
+const log = require('../../utils/log');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -221,7 +222,7 @@ module.exports = {
       .setColor(0x57F287)
       .setTitle(panelTitle)
       .setDescription(panelDesc)
-      .setThumbnail(guild.iconURL({ dynamic: true, size: 512 }))
+      .setThumbnail(guild.iconURL({ size: 512 }))
       .setFooter({ text: `${guild.name} • Xavfsizlik Tizimi` })
       .setTimestamp();
 
@@ -239,7 +240,7 @@ module.exports = {
         components: [row]
       });
     } catch (err) {
-      console.error('[SET-VERIFY PANEL ERROR]:', err);
+      log.error('[SET-VERIFY PANEL ERROR]:', err);
       return interaction.editReply({
         content: `❌ Belgilangan kanalga (<#${targetChannel.id}>) panel yuborishda xatolik: ${err.message}. Botda ushbu kanalda xabar yozish ruxsati borligini tekshiring.`
       });

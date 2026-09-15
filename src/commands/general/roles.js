@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, MessageFlags } = require('discord.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -15,7 +15,7 @@ module.exports = {
     if (roles.size === 0) {
       return interaction.reply({
         content: 'Serverda hech qanday qo\'shimcha rollar mavjud emas.',
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
     }
 

@@ -1,5 +1,6 @@
-const { SlashCommandBuilder, PermissionFlagsBits, ChannelType, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, ChannelType, EmbedBuilder, MessageFlags } = require('discord.js');
 const storage = require('../../config/storage');
+const log = require('../../utils/log');
 
 const REQUIRED_LOG_CHANNELS = [
   { key: 'messages', name: '🗑️・xabar-loglari', oldName: 'xabar-loglari', topic: '🗑️ Xabarlar o\'chirilishi va tahrirlanishi loglari' },
@@ -53,7 +54,7 @@ module.exports = {
       });
       return interaction.reply({
         content: '✅ Log tizimi ushbu serverda butunlay o\'chirib qo\'yildi.',
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
     }
 
@@ -228,7 +229,7 @@ module.exports = {
 
       await interaction.editReply({ embeds: [responseEmbed] });
     } catch (error) {
-      console.error('Set-log xatosi:', error);
+      log.error('Set-log xatosi:', error);
       await interaction.editReply({
         content: `❌ Log kanallarini yaratishda xatolik yuz berdi: ${error.message}`
       });

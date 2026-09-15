@@ -2,6 +2,25 @@ const { PermissionFlagsBits, EmbedBuilder } = require('discord.js');
 const storage = require('../config/storage');
 const logger = require('../utils/logger');
 const { checkMessageLinks, hasMediaContent } = require('../utils/linkFilter');
+const { handleMessage: trackActiveMessage } = require('../utils/activityTracker');
+const log = require('../utils/log');
+
+// Har xabarda process.env o'qib, trim qilib o'tirmaslik uchun bir marta keshlanadi
+const OWNER_ID = (process.env.OWNER_ID || '').trim() || null;
+
+const STAFF_PERMISSIONS = [
+  PermissionFlagsBits.Administrator,
+  PermissionFlagsBits.ManageMessages,
+  PermissionFlagsBits.ManageGuild
+];
+
+// Anti-link va media-roles tekshiruvlari uchun umumiy ruxsat hisobi.
+// Ilgari bu bir xabarda ikki marta, bir xil ko'rinishda hisoblanardi.
+function isExempt(message) {
+  if (OWNER_ID && message.author.id === OWNER_ID) return true;
+  const member = message.member;
+  return Boolean(member && STAFF_PERMISSIONS.some(p => member.permissions.has(p)));
+}
 
 module.exports = {
   name: 'messageCreate',
@@ -10,18 +29,11 @@ module.exports = {
 
     const guild = message.guild;
     const settings = storage.getGuildSettings(guild.id);
+    const exempt = isExempt(message);
 
     // 1. ANTI-LINK VA ANTI-INVITE TEKSHIRUVI (Domen oq ro'yxati va GIF'lar bilan)
     if (settings.antiLinkEnabled !== false) {
-      const member = message.member;
-      const isOwner = process.env.OWNER_ID && message.author.id === process.env.OWNER_ID.trim();
-      const isStaff = member && (
-        member.permissions.has(PermissionFlagsBits.Administrator) ||
-        member.permissions.has(PermissionFlagsBits.ManageMessages) ||
-        member.permissions.has(PermissionFlagsBits.ManageGuild)
-      );
-
-      if (!isOwner && !isStaff) {
+      if (!exempt) {
         const linkCheck = checkMessageLinks(message.content, settings.linkWhitelist || []);
         if (linkCheck.isViolation) {
           try {
@@ -41,7 +53,7 @@ module.exports = {
             await logger.logAntiLink(message, linkCheck.illegalLinks.join('\n'));
             return; // Havola yuborgan foydalanuvchiga XP berilmaydi
           } catch (err) {
-            console.error('Anti-link qayta ishlashda xatolik:', err.message);
+            log.error('Anti-link qayta ishlashda xatolik:', err.message);
           }
         }
       }
@@ -51,14 +63,7 @@ module.exports = {
     const mediaRolesSetting = settings.mediaRoles;
     if (mediaRolesSetting && mediaRolesSetting.enabled && Array.isArray(mediaRolesSetting.roles) && mediaRolesSetting.roles.length > 0) {
       const member = message.member;
-      const isOwner = process.env.OWNER_ID && message.author.id === process.env.OWNER_ID.trim();
-      const isStaff = member && (
-        member.permissions.has(PermissionFlagsBits.Administrator) ||
-        member.permissions.has(PermissionFlagsBits.ManageMessages) ||
-        member.permissions.has(PermissionFlagsBits.ManageGuild)
-      );
-
-      if (!isOwner && !isStaff) {
+      if (!exempt) {
         const hasPermittedRole = member && mediaRolesSetting.roles.some(roleId => member.roles.cache.has(roleId));
 
         if (!hasPermittedRole) {
@@ -102,7 +107,7 @@ module.exports = {
 
               return; // Media yuborgan ruxsatsiz foydalanuvchiga XP berilmaydi
             } catch (err) {
-              console.error('Media roles tekshirishda xatolik:', err.message);
+              log.error('Media roles tekshirishda xatolik:', err.message);
             }
           }
         }
@@ -121,7 +126,7 @@ module.exports = {
             .setColor(0xFEE75C)
             .setTitle('🎉 Daraja Ko\'tarildi!')
             .setDescription(`Ajoyib faollik, ${message.author}! Siz **${xpResult.newLevel}-darajaga** erishdingiz! 🚀`)
-            .setThumbnail(message.author.displayAvatarURL({ dynamic: true, size: 256 }))
+            .setThumbnail(message.author.displayAvatarURL({ size: 256 }))
             .setFooter({ text: `Cleva Leveling • Keyingi darajagacha: ${xpResult.requiredXP} XP` })
             .setTimestamp();
 
@@ -131,7 +136,6 @@ module.exports = {
     }
 
     // 4. KUNLIK FAOLLIK ROLI TIZIMI (Active Role)
-    const { handleMessage: trackActiveMessage } = require('../utils/activityTracker');
     await trackActiveMessage(message).catch(() => {});
   }
 };

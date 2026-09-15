@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Cleva Bot — To'liq Foydalanish Qo'llanmasi</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+      body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0b0f19; color: #e2e8f0; line-height: 1.7; padding: 2rem 1rem; margin: 0; }
+      .container { max-width: 900px; margin: 0 auto; background: #151d30; padding: 2.5rem; border-radius: 14px; border: 1px solid #1e293b; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+      h1 { color: #38bdf8; border-bottom: 2px solid #38bdf8; padding-bottom: 0.5rem; font-size: 2rem; margin-top: 0; }
+      h2 { color: #818cf8; margin-top: 2rem; border-bottom: 1px solid #334155; padding-bottom: 0.3rem; }
+      h3 { color: #38bdf8; margin-top: 1.2rem; }
+      code { background: #0f172a; color: #38bdf8; padding: 0.2rem 0.4rem; border-radius: 4px; font-family: monospace; }
+      pre { background: #0f172a; padding: 1rem; border-radius: 8px; border: 1px solid #334155; overflow-x: auto; color: #a5f3fc; }
+      .cmd-box { background: #0f172a; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #38bdf8; }
+      .alert { background: #1e1b4b; border-left: 4px solid #a855f7; padding: 1rem; border-radius: 6px; margin: 1rem 0; }
+      .security-box { background: #450a0a; border-left: 4px solid #ef4444; padding: 1rem; border-radius: 6px; margin: 1rem 0; }
+      a { color: #38bdf8; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🤖 Cleva — Mukammal Foydalanish Qo'llanmasi</h1>
+      <p>Ushbu sahifada Cleva botining barcha tizimlari, buyruqlari, sozlamalari va server xavfsizligi bo'yicha to'liq ma'lumotlar jamlangan.</p>
+
+      <h2>🛡️ 1. Moderatsiya va Xavfsizlik</h2>
+      <div class="cmd-box">
+        <h3>/give-role & /remove-role-from</h3>
+        <p><code>/give-role user:@foydalanuvchi role:@Rol</code> — Foydalanuvchiga belgilangan rolni beradi.</p>
+        <p><code>/remove-role-from remove_role:@EskiRol having_role:@YangiRol</code> — 2-rolga ega barcha odamlardan 1-rolni bittada olib tashlaydi.</p>
+      </div>
+
+      <div class="cmd-box">
+        <h3>/mute & /unmute</h3>
+        <p><code>/mute user:@foydalanuvchi duration:10m reason:Sabab</code> — Vaqtinchalik ovozini o'chirish (Timeout: 60s, 10m, 1h, 1d, 7d).</p>
+        <p><code>/unmute user:@foydalanuvchi</code> — Jazoni bekor qilish.</p>
+      </div>
+
+      <div class="cmd-box">
+        <h3>/warns & /del-warn</h3>
+        <p><code>/del-warn user:@foydalanuvchi reason:Qoidabuzarlik</code> — Xabarni o'chiradi va ogohlantirish (warn) yozadi.</p>
+        <p><code>/warns list user:@foydalanuvchi</code> — Foydalanuvchining barcha warnlari ro'yxatini ko'rish.</p>
+        <p><code>/warns remove user:@foydalanuvchi warn_id:[ID]</code> — Bitta warnni o'chirish.</p>
+        <p><code>/warns clear user:@foydalanuvchi</code> — Barcha warnlarini tozalash.</p>
+      </div>
+
+      <div class="cmd-box">
+        <h3>/lock & /unlock</h3>
+        <p><code>/lock channel:#kanal reason:Janjal</code> — Kanalni oddiy a'zolar uchun yozishdan yopib qo'yadi.</p>
+        <p><code>/unlock channel:#kanal</code> — Kanalni yana hammaga ochib beradi.</p>
+      </div>
+
+      <div class="cmd-box">
+        <h3>/clear</h3>
+        <p><code>/clear count:50 user:@foydalanuvchi</code> — Chatdagi xabarlarni ommaviy tozalash (1-100 ta).</p>
+      </div>
+
+      <h2>⚙️ 2. Avtomatlashtirilgan Tizimlar</h2>
+      <div class="cmd-box">
+        <h3>1. Kategoriyalangan Log Tizimi (/set-log)</h3>
+        <p><code>/set-log category:[Kategoriya]</code> buyrug'ini bering. Bot tanlangan kategoriya ichida avtomatik 5 ta yopiq kanal ochadi:</p>
+        <ul>
+          <li><code>#xabar-loglari</code> — Xabarlar o'chishi va tahrirlanishi</li>
+          <li><code>#azo-loglari</code> — A'zolar kirishi, chiqishi va profil o'zgarishlari</li>
+          <li><code>#moderatsiya-loglari</code> — Mute, warn, lock, ban loglari</li>
+          <li><code>#ticket-loglari</code> — Ticket ochilishi, yopilishi va transcriptlar</li>
+          <li><code>#ovozli-loglar</code> — Ovozli kanallar harakatlari</li>
+        </ul>
+      </div>
+
+      <div class="cmd-box">
+        <h3>2. Ticket (Murojaat & Rol Olish) Tizimi (/set-ticket)</h3>
+        <p><code>/set-ticket channel:#tickets category:[Kategoriya] support_role:@Moderator</code></p>
+        <p>Asosiy kanalda tugmali panel chiqadi. A'zo tugmani bossa, shaxsiy kanal ochiladi va unga rol olish anketasi yuboriladi. Ticket yopilganda barcha yozishmalar <code>.txt</code> transcript qilinib logga saqlanadi!</p>
+      </div>
+
+      <div class="cmd-box">
+        <h3>3. Auto-Role Tizimi (/set-autorole)</h3>
+        <p><code>/set-autorole role:@Azo</code> — Serverga yangi kirgan a'zolarga darhol ushbu rol avtomatik beriladi.</p>
+      </div>
+
+      <div class="cmd-box">
+        <h3>4. Anti-Link (Reklamadan Himoya) (/set-antilink)</h3>
+        <p>Standart holatda yoqilgan. <code>/set-antilink status:True</code> yoki <code>False</code> orqali boshqariladi. Begona Discord linklari va veb-sayt havolalarini avtomatik o'chiradi.</p>
+      </div>
+
+      <div class="cmd-box">
+        <h3>5. Server Statistikasi (/set-stats)</h3>
+        <p><code>/set-stats status:Yoqish</code> yoki <code>O'chirish</code></p>
+        <p>Serverning yuqorisida qulflangan ovozli hisoblagich kanallari (Jami a'zolar, Odamlar, Botlar) kategoriyasini avtomat yaratadi va har 10 daqiqada yangilab turadi.</p>
+      </div>
+
+      <div class="cmd-box">
+        <h3>6. Avtomatik Shaxsiy Ovozli Xonalar (/set-tempvoice)</h3>
+        <p><code>/set-tempvoice status:Yoqish</code> yoki <code>O'chirish</code></p>
+        <p>"➕ Xona Yaratish" nomli kanal ochiladi. Foydalanuvchi unga kirishi bilan bot unga shaxsiy kanal ochib beradi va uni avtomatik ko'chiradi. Hamma chiqib ketgach kanal o'zi o'chadi.</p>
+      </div>
+
+      <div class="cmd-box">
+        <h3>7. Level & XP Tizimi (/set-level, /rank, /leaderboard)</h3>
+        <p><code>/set-level status:Yoqish [channel]</code> — Chatda yozganlik uchun tajriba (XP) to'plash tizimini yoqadi (Standart holatda o'chirilgan).</p>
+        <p><code>/rank [user]</code> — Foydalanuvchining darajasi, XP, serverdagi o'rni va foizli progress barini ko'rsatadi.</p>
+        <p><code>/leaderboard</code> — Serverdagi eng faol 10 nafar a'zo reytingini ko'rsatadi.</p>
+      </div>
+
+      <h2>📢 3. E'lonlar va So'rovnomalar</h2>
+      <div class="cmd-box">
+        <p><code>/say message:Salom channel:#kanal</code> — Bot nomidan oddiy xabar yuborish.</p>
+        <p><code>/embed title:E'lon description:Matn... color:#5865F2 image:URL</code> — Ramkali rasmiy e'lon.</p>
+        <p><code>/poll question:Savol option1:Variant1 option2:Variant2</code> — Emojilar bilan ovoz berish so'rovnomasi.</p>
+      </div>
+
+      <div class="security-box">
+        <h2>🔒 4. Muhim Xavfsizlik Qoidalari</h2>
+        <ol>
+          <li><strong>Rol Ierarxiyasi:</strong> Server Sozlamalari -> Rollar bo'limida Cleva botining rolini oddiy a'zolar va moderatorlar rollaridan yuqoriga qo'ying, lekin server egasi rolidan pastda tursin.</li>
+          <li><strong>Yagona Server Rejimi:</strong> Render ENV ga <code>ALLOWED_GUILD_ID</code> kiritilgani sababli, bot begona serverlarga qo'shilsa darhol o'zi chiqib ketadi.</li>
+          <li><strong>Asosiy Admin:</strong> Render ENV ga <code>OWNER_ID</code> kiritilgani sababli, faqat siz mutlaq boshqaruv huquqiga egasiz.</li>
+          <li><strong>Token Xavfsizligi:</strong> Bot tokeningiz hech qachon GitHub ga tushmaydi (.gitignore orqali himoyalangan).</li>
+        </ol>
+      </div>
+
+      <p style="text-align: center; margin-top: 2rem;"><a href="/">← Bosh sahifaga qaytish</a></p>
+    </div>
+  </body>
+</html>

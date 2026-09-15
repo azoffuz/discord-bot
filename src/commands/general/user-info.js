@@ -22,7 +22,7 @@ module.exports = {
     const embed = new EmbedBuilder()
       .setColor(member?.displayColor || 0x5865F2)
       .setTitle(`👤 ${targetUser.tag} — Profil Ma'lumotlari`)
-      .setThumbnail(targetUser.displayAvatarURL({ dynamic: true, size: 512 }))
+      .setThumbnail(targetUser.displayAvatarURL({ size: 512 }))
       .addFields(
         {
           name: '🆔 ID',

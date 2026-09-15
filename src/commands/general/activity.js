@@ -80,9 +80,9 @@ module.exports = {
       .setColor(hasRole ? 0x57F287 : 0x5865F2)
       .setAuthor({
         name: `${targetMember?.displayName || targetUser.username} — Kunlik Faollik`,
-        iconURL: targetUser.displayAvatarURL({ dynamic: true })
+        iconURL: targetUser.displayAvatarURL()
       })
-      .setThumbnail(targetUser.displayAvatarURL({ dynamic: true, size: 256 }))
+      .setThumbnail(targetUser.displayAvatarURL({ size: 256 }))
       .setDescription(
         `👤 **Foydalanuvchi:** <@${targetUser.id}>\n` +
         `🎖️ **Faollik Roli:** ${role ? `<@&${role.id}>` : '*Belgilanmagan*'}\n` +

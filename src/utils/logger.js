@@ -1,19 +1,27 @@
 const { EmbedBuilder, AuditLogEvent, PermissionFlagsBits } = require('discord.js');
 const storage = require('../config/storage');
+const log = require('./log');
+
+/**
+ * Ushbu tur uchun log kanali sozlanganini tekshiradi (tarmoqqa chiqmaydi).
+ * Qimmat ishni (audit log so'rovlari, kutish) boshlashdan oldin chaqiriladi.
+ */
+function getLogChannelId(guild, type = 'general') {
+  if (!guild) return null;
+  const settings = storage.getGuildSettings(guild.id);
+
+  // Kategoriya ichidagi maxsus kanalni aniqlash
+  if (settings.logChannels && settings.logChannels[type]) {
+    return settings.logChannels[type];
+  }
+  return settings.logChannelId || null;
+}
 
 async function sendLog(guild, embed, type = 'general', files = []) {
   try {
     if (!guild) return;
-    const settings = storage.getGuildSettings(guild.id);
 
-    // Kategoriya ichidagi maxsus kanalni aniqlash
-    let channelId = null;
-    if (settings.logChannels && settings.logChannels[type]) {
-      channelId = settings.logChannels[type];
-    } else if (settings.logChannelId) {
-      channelId = settings.logChannelId;
-    }
-
+    const channelId = getLogChannelId(guild, type);
     if (!channelId) return;
 
     // 1. Avval joriy serverdan, topilmasa boshqa serverdagi kanallar ichidan izlash
@@ -42,10 +50,10 @@ async function sendLog(guild, embed, type = 'general', files = []) {
     }
 
     await channel.send(payload).catch(err => {
-      console.error(`Log xabari yuborishda xatolik (${guild.name} -> ${channel.guild?.name || 'Boshqa server'} / ${type}):`, err.message);
+      log.error(`Log xabari yuborishda xatolik (${guild.name} -> ${channel.guild?.name || 'Boshqa server'} / ${type}):`, err.message);
     });
   } catch (error) {
-    console.error('Logger xatosi:', error);
+    log.error('Logger xatosi:', error);
   }
 }
 
@@ -55,6 +63,9 @@ module.exports = {
   // 1. XABARLAR LOGLARI (type: 'messages')
   async logMessageDelete(message) {
     if (!message.guild) return;
+    // Log kanali sozlanmagan bo'lsa, pastdagi 800ms kutish va 2 ta audit log
+    // so'rovini umuman bajarmaymiz (har o'chirilgan xabar uchun tejaladi).
+    if (!getLogChannelId(message.guild, 'messages')) return;
 
     let executorText = '👤 Foydalanuvchining o\'zi (yoki audit logda qayd etilmagan)';
     let reasonText = null;
@@ -115,7 +126,7 @@ module.exports = {
         }
       }
     } catch (err) {
-      console.error('Audit log tekshirishda xato:', err.message);
+      log.error('Audit log tekshirishda xato:', err.message);
     }
 
     const embed = new EmbedBuilder()
@@ -162,7 +173,7 @@ module.exports = {
     const embed = new EmbedBuilder()
       .setColor(0x57F287)
       .setTitle('📥 Yangi A\'zo Qo\'shildi')
-      .setThumbnail(member.user.displayAvatarURL({ dynamic: true, size: 256 }))
+      .setThumbnail(member.user.displayAvatarURL({ size: 256 }))
       .setDescription(`${member.user.tag} (<@${member.user.id}>) serverga kirdi.`)
       .addFields(
         { name: 'Hisob ochilgan sana', value: `<t:${Math.floor(member.user.createdTimestamp / 1000)}:R>`, inline: true },
@@ -178,7 +189,7 @@ module.exports = {
     const embed = new EmbedBuilder()
       .setColor(0xED4245)
       .setTitle('📤 A\'zo Serverdan Chiqdi')
-      .setThumbnail(member.user.displayAvatarURL({ dynamic: true, size: 256 }))
+      .setThumbnail(member.user.displayAvatarURL({ size: 256 }))
       .setDescription(`${member.user.tag} (<@${member.user.id}>) serverni tark etdi.`)
       .addFields(
         { name: 'Qolgan a\'zolar soni', value: `${member.guild.memberCount}`, inline: true }
@@ -198,7 +209,7 @@ module.exports = {
     const embed = new EmbedBuilder()
       .setColor(0x5865F2)
       .setTitle('👤 A\'zo Profili O\'zgardi')
-      .setThumbnail(newMember.user.displayAvatarURL({ dynamic: true, size: 256 }))
+      .setThumbnail(newMember.user.displayAvatarURL({ size: 256 }))
       .setDescription(`**Foydalanuvchi:** ${newMember.user.tag} (<@${newMember.id}>)`)
       .setTimestamp()
       .setFooter({ text: `ID: ${newMember.id}` });
@@ -232,7 +243,7 @@ module.exports = {
     const embed = new EmbedBuilder()
       .setColor(0x992D22)
       .setTitle('🔨 Foydalanuvchi Ban Qilindi')
-      .setThumbnail(ban.user.displayAvatarURL({ dynamic: true, size: 256 }))
+      .setThumbnail(ban.user.displayAvatarURL({ size: 256 }))
       .setDescription(`${ban.user.tag} (<@${ban.user.id}>) serverdan chetlatildi (ban).`)
       .addFields({ name: 'Sabab', value: ban.reason || 'Sabab ko\'rsatilmagan' })
       .setFooter({ text: `ID: ${ban.user.id}` })
@@ -245,7 +256,7 @@ module.exports = {
     const embed = new EmbedBuilder()
       .setColor(0x2ECC71)
       .setTitle('🔓 Foydalanuvchi Bandan Chiqarildi')
-      .setThumbnail(ban.user.displayAvatarURL({ dynamic: true, size: 256 }))
+      .setThumbnail(ban.user.displayAvatarURL({ size: 256 }))
       .setDescription(`${ban.user.tag} (<@${ban.user.id}>) ning bandan chiqarildi.`)
       .setFooter({ text: `ID: ${ban.user.id}` })
       .setTimestamp();
@@ -334,7 +345,7 @@ module.exports = {
         `**Tekshiruv usuli:** ${typeLabel}\n` +
         `**Vaqt:** <t:${Math.floor(Date.now() / 1000)}:R>`
       )
-      .setThumbnail(member.user.displayAvatarURL({ dynamic: true }))
+      .setThumbnail(member.user.displayAvatarURL())
       .setFooter({ text: `Foydalanuvchi ID: ${member.id}` })
       .setTimestamp();
 

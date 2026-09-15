@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle, ComponentType } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle, ComponentType, MessageFlags } = require('discord.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -287,7 +287,7 @@ module.exports = {
       if (i.user.id !== interaction.user.id) {
         return i.reply({
           content: '❌ Bu menyu siz uchun emas! O\'zingiz uchun ochishga `/help` deb yozing.',
-          ephemeral: true
+          flags: MessageFlags.Ephemeral
         });
       }
 

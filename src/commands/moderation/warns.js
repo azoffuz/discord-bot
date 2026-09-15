@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, MessageFlags } = require('discord.js');
 const storage = require('../../config/storage');
 const logger = require('../../utils/logger');
 
@@ -53,7 +53,7 @@ module.exports = {
       if (warns.length === 0) {
         return interaction.reply({
           content: `✅ ${targetUser.tag} da hech qanday ogohlantirish mavjud emas (toza).`,
-          ephemeral: true
+          flags: MessageFlags.Ephemeral
         });
       }
 
@@ -65,7 +65,7 @@ module.exports = {
       const embed = new EmbedBuilder()
         .setColor(0xFEE75C)
         .setTitle(`⚠️ ${targetUser.tag} ning Ogohlantirishlari (${warns.length} ta)`)
-        .setThumbnail(targetUser.displayAvatarURL({ dynamic: true }))
+        .setThumbnail(targetUser.displayAvatarURL())
         .setDescription(listText.slice(0, 3900))
         .setFooter({ text: `Warnni o'chirish uchun: /warns remove user:@${targetUser.username} warn_id:[ID]` })
         .setTimestamp();
@@ -81,7 +81,7 @@ module.exports = {
       if (!removed) {
         return interaction.reply({
           content: `❌ ${targetUser.tag} da \`${warnId}\` ID li ogohlantirish topilmadi!`,
-          ephemeral: true
+          flags: MessageFlags.Ephemeral
         });
       }
 
@@ -114,7 +114,7 @@ module.exports = {
       if (clearedCount === 0) {
         return interaction.reply({
           content: `ℹ️ ${targetUser.tag} da tozalash uchun ogohlantirishlar mavjud emas.`,
-          ephemeral: true
+          flags: MessageFlags.Ephemeral
         });
       }
 
