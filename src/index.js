@@ -28,6 +28,19 @@ const client = new Client({
   ]
 });
 
+// Global Crash Himoyasi (Bot xatolik sababli butunlay o'chib ketmasligi uchun)
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('⚠️ [XAVFSIZLIK] Ushlanmagan Promise Xatosi (Unhandled Rejection):', reason);
+});
+
+process.on('uncaughtException', (error) => {
+  console.error('⚠️ [XAVFSIZLIK] Kutilmagan Xatolik (Uncaught Exception):', error);
+});
+
+process.on('uncaughtExceptionMonitor', (error, origin) => {
+  console.error('⚠️ [XAVFSIZLIK] Xatolik Monitori:', error, origin);
+});
+
 // Shard va Xatolik Tinglovchilari (Ulanish xatolarini ushlash)
 client.on('error', err => {
   console.error('❌ Discord Client Xatosi:', err.message);
@@ -47,6 +60,13 @@ client.on('shardDisconnect', (event, shardId) => {
     botLoginError = 'Authentication Failed (Code 4004): Discord Token noto\'g\'ri!';
   } else {
     botLoginError = `Shard uzildi (Code ${event.code}): ${event.reason || 'Noma\'lum sabab'}`;
+    console.log('🔄 Shard uzildi, 10 soniyadan so\'ng qayta ulanishga harakat qilinadi...');
+    setTimeout(() => {
+      if (!client.isReady()) {
+        const token = getCleanToken();
+        if (token) loginDiscord(token);
+      }
+    }, 10000);
   }
 });
 
@@ -394,6 +414,19 @@ app.get('/privacy', (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`🌐 Express web-server ${PORT}-portda ishga tushdi (Render.com uchun tayyor).`);
+
+  // Render 24/7 Keep-Alive (Har 10 daqiqada o'ziga ping yuborib serverni uyg'oq saqlash)
+  const pingUrl = process.env.RENDER_EXTERNAL_URL || 'https://discord-bot-krre.onrender.com';
+  setInterval(async () => {
+    try {
+      const res = await fetch(`${pingUrl}/health`);
+      if (res.ok) {
+        console.log(`[KEEP-ALIVE] Render serveri uyg'oq saqlanmoqda (${new Date().toLocaleTimeString()})`);
+      }
+    } catch (e) {
+      // e'tibor bermaslik
+    }
+  }, 10 * 60 * 1000);
 });
 
 // 5. BAZANI TIKLASH VA DISCORD GA ULANISH
