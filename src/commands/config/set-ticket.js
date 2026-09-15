@@ -1,6 +1,5 @@
-const { SlashCommandBuilder, PermissionFlagsBits, ChannelType, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, ChannelType, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const storage = require('../../config/storage');
-const log = require('../../utils/log');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -49,7 +48,7 @@ module.exports = {
     if (!botMember.permissions.has(PermissionFlagsBits.ManageChannels)) {
       return interaction.reply({
         content: '❌ Botda kanallarni boshqarish (**Manage Channels**) ruxsati yo\'q! Ticket tizimi ishlashi uchun botga ushbu ruxsatni bering.',
-        flags: MessageFlags.Ephemeral
+        ephemeral: true
       });
     }
 
@@ -97,12 +96,12 @@ module.exports = {
         )
         .setTimestamp();
 
-      await interaction.reply({ embeds: [successEmbed], flags: MessageFlags.Ephemeral });
+      await interaction.reply({ embeds: [successEmbed], ephemeral: true });
     } catch (error) {
-      log.error('Set-ticket xatosi:', error);
+      console.error('Set-ticket xatosi:', error);
       await interaction.reply({
         content: `❌ Xatolik yuz berdi: ${error.message}`,
-        flags: MessageFlags.Ephemeral
+        ephemeral: true
       });
     }
   }

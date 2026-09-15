@@ -5,7 +5,6 @@
  */
 
 const storage = require('../config/storage');
-const log = require('./log');
 
 /**
  * YouTube kanal nomini, havolasini yoki handlesini Channel ID ga aylantirish
@@ -91,7 +90,7 @@ async function resolveYouTubeChannel(input) {
 
     return null;
   } catch (err) {
-    log.error('[YOUTUBE RESOLVE XATOSI]:', err.message);
+    console.error('[YOUTUBE RESOLVE XATOSI]:', err.message);
     return null;
   }
 }
@@ -133,7 +132,7 @@ async function fetchLatestVideos(channelId) {
 
     return entries;
   } catch (err) {
-    log.error('[YOUTUBE FEED XATOSI]:', err.message);
+    console.error('[YOUTUBE FEED XATOSI]:', err.message);
     return [];
   }
 }
@@ -190,7 +189,7 @@ async function checkYouTubeUpdates(client) {
             .trim();
 
           await discordChannel.send({ content: messageContent }).catch(err => {
-            log.error(`[YOUTUBE SEND ERROR] (${guild.name}):`, err.message);
+            console.error(`[YOUTUBE SEND ERROR] (${guild.name}):`, err.message);
           });
 
           // Bazada oxirgi video ID sini yangilash
@@ -201,11 +200,11 @@ async function checkYouTubeUpdates(client) {
             }
           });
 
-          log.info(`[YOUTUBE NOTIFIER] Yangi video yuborildi: "${latestVideo.title}" (${guild.name})`);
+          console.log(`[YOUTUBE NOTIFIER] Yangi video yuborildi: "${latestVideo.title}" (${guild.name})`);
         }
       }
     } catch (err) {
-      log.error(`[YOUTUBE CHECK ERROR] (${guild.name}):`, err.message);
+      console.error(`[YOUTUBE CHECK ERROR] (${guild.name}):`, err.message);
     }
   }
 }

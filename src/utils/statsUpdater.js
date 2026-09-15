@@ -1,15 +1,7 @@
 const storage = require('../config/storage');
-const log = require('./log');
 
 // Har bir kanal uchun oxirgi o'zgartirilgan vaqtni saqlash (Rate-limit himoyasi)
 const lastUpdateMap = new Map();
-
-// Har bir server uchun oxirgi to'liq hisoblash vaqti.
-// Discord REST limiti: 10 daqiqada 2 marta nom o'zgartirish. Shuning uchun
-// 5 daqiqadan tez-tez hisoblashning ma'nosi yo'q - qimmat so'rovlarni
-// boshlashdan OLDIN to'xtatamiz (ilgari ular har safar bajarilar edi).
-const GUILD_RECOMPUTE_MS = 5 * 60 * 1000;
-const lastGuildRun = new Map();
 
 async function getChannel(guild, channelId) {
   if (!channelId) return null;
@@ -33,7 +25,7 @@ async function safelyRenameChannel(channel, expectedName, force = false) {
     await channel.setName(expectedName);
     lastUpdateMap.set(channel.id, Date.now());
   } catch (err) {
-    log.warn(`[STATS UPDATE XATOSI (${channel.id} / ${expectedName})]:`, err.message);
+    console.warn(`[STATS UPDATE XATOSI (${channel.id} / ${expectedName})]:`, err.message);
   }
 }
 
@@ -54,42 +46,15 @@ async function updateGuildStats(guild, force = false) {
 
   if (!totalChannelId && !membersChannelId && !botsChannelId && !onlineChannelId && !boostersChannelId && !voiceChannelId) return;
 
-  // Tarmoqqa chiqishdan oldingi to'xtatgich. voiceStateUpdate har bir harakatda
-  // chaqiradi - shusiz har safar to'liq a'zolar ro'yxati tortib olinardi.
-  const now = Date.now();
-  if (!force && now - (lastGuildRun.get(guild.id) || 0) < GUILD_RECOMPUTE_MS) return;
-  lastGuildRun.set(guild.id, now);
-
   try {
-    // 1. Bot va booster sonini faqat kesh orqali bilish mumkin. Shuning uchun
-    //    a'zolar ro'yxati faqat shu hisoblagichlar kerak bo'lsa VA kesh
-    //    to'liq bo'lmasa tortib olinadi (ilgari har safar tortilardi).
-    const needsMemberCache = Boolean(botsChannelId || boostersChannelId || membersChannelId);
-    if (needsMemberCache && guild.members.cache.size < (guild.memberCount || 0)) {
-      await guild.members.fetch().catch(() => {});
-    }
+    // A'zolarni to'liq keshga olish
+    await guild.members.fetch().catch(() => {});
+    const fetchedGuild = await guild.fetch().catch(() => guild);
 
-    // 2. Jami va onlayn sonini bitta so'rovda olish (with_counts).
-    //    GuildPresences intenti yoqilmagan, shuning uchun onlayn sonini
-    //    keshdan hisoblab bo'lmaydi - approximatePresenceCount yagona manba.
-    let total = guild.memberCount || 0;
-    let online = null;
-
-    if (totalChannelId || onlineChannelId) {
-      const fetched = await guild.fetch().catch(() => null);
-      if (fetched) {
-        total = fetched.approximateMemberCount ?? fetched.memberCount ?? total;
-        online = fetched.approximatePresenceCount ?? null;
-      }
-    }
-
-    if (!total) total = guild.members.cache.size;
-    if (online === null) {
-      online = guild.members.cache.filter(m => m.presence && m.presence.status !== 'offline').size;
-    }
-
+    const total = guild.memberCount || guild.members.cache.size;
     const bots = guild.members.cache.filter(m => m.user.bot).size;
     const humans = Math.max(0, total - bots);
+    const online = fetchedGuild.approximatePresenceCount ?? guild.members.cache.filter(m => m.presence && m.presence.status !== 'offline').size;
     const boosters = guild.members.cache.filter(m => m.premiumSince !== null).size;
     const voice = guild.voiceStates.cache.filter(vs => vs.channelId).size;
 
@@ -112,7 +77,7 @@ async function updateGuildStats(guild, force = false) {
       safelyRenameChannel(voiceCh, `🎙️・Ovozdagilar: ${voice}`, force)
     ]);
   } catch (err) {
-    log.error(`[STATS YANGILASH XATOSI (${guild.name})]:`, err.message);
+    console.error(`[STATS YANGILASH XATOSI (${guild.name})]:`, err.message);
   }
 }
 

@@ -1,6 +1,5 @@
-const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, MessageFlags } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
 const logger = require('../../utils/logger');
-const log = require('../../utils/log');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -29,7 +28,7 @@ module.exports = {
     if (roleToRemove.position >= botMember.roles.highest.position) {
       return interaction.reply({
         content: `❌ Men **${roleToRemove.name}** rolini olib tashlay olmayman, chunki mening rolim ushbu roldan pastda joylashgan.`,
-        flags: MessageFlags.Ephemeral
+        ephemeral: true
       });
     }
 
@@ -37,7 +36,7 @@ module.exports = {
     if (interaction.user.id !== guild.ownerId && roleToRemove.position >= interaction.member.roles.highest.position) {
       return interaction.reply({
         content: `❌ Siz o'zingizning eng yuqori rolingizdan yuqori yoki unga teng rolni olib tashlay olmaysiz.`,
-        flags: MessageFlags.Ephemeral
+        ephemeral: true
       });
     }
 
@@ -95,7 +94,7 @@ module.exports = {
         `Muvaffaqiyatli: ${removedCount} ta a'zodan olindi`
       );
     } catch (error) {
-      log.error('Remove-role-from xatoligi:', error);
+      console.error('Remove-role-from xatoligi:', error);
       await interaction.editReply({
         content: `❌ Jarayon davomida xatolik yuz berdi: ${error.message}`
       });

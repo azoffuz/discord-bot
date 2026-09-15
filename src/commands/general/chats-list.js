@@ -1,5 +1,4 @@
 const { SlashCommandBuilder, EmbedBuilder, ChannelType, PermissionFlagsBits, MessageFlags } = require('discord.js');
-const log = require('../../utils/log');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -70,7 +69,7 @@ module.exports = {
           `*(🔒 belgisi faqat maxsus ruxsatli/yopiq kanallarni bildiradi)*\n\n` +
           `━━━━━━━━━━━━━━━━━━━━━━━━`
         )
-        .setThumbnail(guild.iconURL({ size: 256 }))
+        .setThumbnail(guild.iconURL({ dynamic: true, size: 256 }))
         .setFooter({ text: `Cleva • Jami ${totalChannels} ta kanal` })
         .setTimestamp();
 
@@ -124,7 +123,7 @@ module.exports = {
 
       return interaction.editReply({ embeds: embeds.slice(0, 10) });
     } catch (err) {
-      log.error('[CHATS-LIST XATOSI]:', err);
+      console.error('[CHATS-LIST XATOSI]:', err);
       return interaction.editReply({
         content: `❌ Kanallar ro'yxatini yuklashda xatolik yuz berdi: ${err.message}`
       });

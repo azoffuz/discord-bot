@@ -10,7 +10,6 @@ const {
   PermissionFlagsBits
 } = require('discord.js');
 const storage = require('../config/storage');
-const log = require('./log');
 
 /**
  * MEGA TEAM rasmiy a'zo dosye kartochkasi Embedini yaratadi
@@ -24,10 +23,10 @@ function createTeamCardEmbed(member, data, targetUser) {
     .setColor(0xF1C40F)
     .setAuthor({
       name: 'MEGA TEAM • RASMIY A\'ZO DOSYESI',
-      iconURL: targetUser.displayAvatarURL()
+      iconURL: targetUser.displayAvatarURL({ dynamic: true })
     })
     .setTitle(`🎖️ ${data.fullName || targetUser.displayName || targetUser.username} (${data.age ? data.age + ' yosh' : 'Noma\'lum'})`)
-    .setThumbnail(targetUser.displayAvatarURL({ size: 256 }))
+    .setThumbnail(targetUser.displayAvatarURL({ dynamic: true, size: 256 }))
     .setDescription(
       `👤 **A'zo:** <@${targetUser.id}> (\`${targetUser.tag || targetUser.username}\`)\n` +
       `🆔 **Discord ID:** \`${targetUser.id}\`\n` +
@@ -290,7 +289,7 @@ async function handleTeamArchiveInteraction(interaction) {
             channelNotice = `\n📁 Kartochkangiz <#${archiveChannel.id}> kanaliga muvaffaqiyatli yuborildi!`;
           }
         } catch (err) {
-          log.error('[TEAM ARCHIVE POST ERROR]:', err);
+          console.error('[TEAM ARCHIVE POST ERROR]:', err);
           channelNotice = `\n⚠️ Kanalga yuborishda xatolik: ${err.message}`;
         }
       } else {
