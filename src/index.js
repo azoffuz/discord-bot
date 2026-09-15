@@ -67,12 +67,21 @@ const PORT = process.env.PORT || 3000;
 let botLoginError = null;
 let botLoginAttempts = 0;
 
+function getCleanToken() {
+  const raw = process.env.DISCORD_TOKEN || process.env.TOKEN || process.env.BOT_TOKEN || '';
+  return raw.trim().replace(/^["']|["']$/g, '');
+}
+
 app.get('/', (req, res) => {
   const isReady = client.isReady();
-  const token = process.env.DISCORD_TOKEN;
+  const token = getCleanToken();
   let statusText = 'Ishga tushmoqda...';
   let statusColor = '#f59e0b'; // sariq
   let errorAdvice = '';
+
+  const tokenStatusHtml = token && token !== 'your_bot_token_here'
+    ? `<span style="color: #4ade80;">● Kiritilgan (${token.length} ta belgi)</span>`
+    : `<span style="color: #ef4444;">○ TOPILMADI (Render ENV ga DISCORD_TOKEN kiriting!)</span>`;
 
   if (isReady) {
     statusText = 'Faol (Online)';
@@ -127,6 +136,7 @@ app.get('/', (req, res) => {
           </div>
           <h1>🤖 Cleva — Discord Bot</h1>
           <p>Bot holati: <strong style="color: ${statusColor};">${statusText}</strong></p>
+          <p>Token holati: <strong>${tokenStatusHtml}</strong></p>
           ${errorAdvice}
           <p style="margin-top: 1rem;">Bot nomi: <strong>${client.user ? client.user.tag : 'Cleva'}</strong></p>
           <p>Serverlar soni: <strong>${client.guilds?.cache.size || 0}</strong></p>
@@ -391,7 +401,7 @@ async function startBot() {
     console.error('Storage init xatosi:', err);
   }
 
-  const token = process.env.DISCORD_TOKEN;
+  const token = getCleanToken();
 
   if (!token || token === 'your_bot_token_here') {
     botLoginError = 'DISCORD_TOKEN Environment Variable topilmadi!';

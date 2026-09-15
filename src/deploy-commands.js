@@ -24,8 +24,12 @@ async function deployCommands() {
     }
   }
 
-  const token = process.env.DISCORD_TOKEN;
-  const clientId = process.env.CLIENT_ID;
+  const rawToken = process.env.DISCORD_TOKEN || process.env.TOKEN || process.env.BOT_TOKEN || '';
+  const token = rawToken.trim().replace(/^["']|["']$/g, '');
+
+  const rawClientId = process.env.CLIENT_ID || process.env.APPLICATION_ID || process.env.APP_ID || '';
+  const clientId = rawClientId.trim().replace(/^["']|["']$/g, '');
+
   const guildId = process.env.ALLOWED_GUILD_ID || process.env.GUILD_ID;
 
   if (!token || !clientId) {
