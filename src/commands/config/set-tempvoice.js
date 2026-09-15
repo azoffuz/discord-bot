@@ -1,6 +1,5 @@
 const { SlashCommandBuilder, PermissionFlagsBits, ChannelType, EmbedBuilder, MessageFlags } = require('discord.js');
 const storage = require('../../config/storage');
-const log = require('../../utils/log');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -108,7 +107,7 @@ module.exports = {
 
       return interaction.editReply({ embeds: [successEmbed] });
     } catch (err) {
-      log.error('[SET-TEMPVOICE XATOSI]:', err);
+      console.error('[SET-TEMPVOICE XATOSI]:', err);
       return interaction.editReply({
         content: `❌ Tizimni sozlashda xatolik yuz berdi: ${err.message}`
       });

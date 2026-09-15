@@ -1,5 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, AuditLogEvent, MessageFlags } = require('discord.js');
-const log = require('../../utils/log');
+const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, AuditLogEvent } = require('discord.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -26,7 +25,7 @@ module.exports = {
     ),
 
   async execute(interaction) {
-    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+    await interaction.deferReply({ ephemeral: true });
 
     const guild = interaction.guild;
     const tur = interaction.options.getString('tur') || 'all';
@@ -141,7 +140,7 @@ module.exports = {
 
       await interaction.editReply({ embeds: [embed] });
     } catch (error) {
-      log.error('audit-log buyrug\'ida xatolik:', error);
+      console.error('audit-log buyrug\'ida xatolik:', error);
       await interaction.editReply({
         content: `❌ Audit jurnalini o'qishda xatolik yuz berdi: ${error.message}`
       });

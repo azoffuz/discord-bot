@@ -1,5 +1,3 @@
-const log = require('../utils/log');
-
 module.exports = {
   name: 'guildCreate',
   async execute(guild) {
@@ -12,11 +10,11 @@ module.exports = {
     // Agar maxsus server ID lari belgilangan bo'lsa va bu boshqa begona server bo'lsa
     if (allowedGuilds.length > 0) {
       if (!allowedGuilds.includes(guild.id)) {
-        log.warn(`[XAVFSIZLIK] Bot ruxsatsiz serverga (${guild.name} | ${guild.id}) qo'shildi. Avtomatik chiqib ketilmoqda...`);
+        console.warn(`[XAVFSIZLIK] Bot ruxsatsiz serverga (${guild.name} | ${guild.id}) qo'shildi. Avtomatik chiqib ketilmoqda...`);
         try {
           await guild.leave();
         } catch (err) {
-          log.error(`Serverdan chiqishda xatolik (${guild.name}):`, err.message);
+          console.error(`Serverdan chiqishda xatolik (${guild.name}):`, err.message);
         }
       }
     }

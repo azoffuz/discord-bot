@@ -14,13 +14,6 @@ const {
 } = require('discord.js');
 const storage = require('../config/storage');
 const logger = require('../utils/logger');
-const { handleTempVoiceInteraction } = require('../utils/tempVoiceManager');
-const { handleLfgInteraction } = require('../utils/lfgManager');
-const { handleVerifyInteraction } = require('../utils/verifyManager');
-const { handleTeamArchiveInteraction } = require('../utils/teamArchiveManager');
-const { handleAvatarInteraction } = require('../commands/general/avatar');
-const { runCommand } = require('../utils/commandRunner');
-const log = require('../utils/log');
 
 module.exports = {
   name: 'interactionCreate',
@@ -36,7 +29,7 @@ module.exports = {
       if (interaction.guildId && !allowedGuilds.includes(interaction.guildId)) {
         const replyPayload = {
           content: '❌ Bu bot faqat maxsus ruxsat berilgan rasmiy serverlarda ishlaydi.',
-          flags: MessageFlags.Ephemeral
+          ephemeral: true
         };
         if (interaction.isRepliable()) {
           return interaction.reply(replyPayload).catch(() => {});
@@ -49,33 +42,51 @@ module.exports = {
     if (interaction.isChatInputCommand()) {
       const command = client.commands.get(interaction.commandName);
       if (!command) {
-        log.warn(`Noma'lum buyruq chaqirildi: ${interaction.commandName}`);
+        console.warn(`Noma'lum buyruq chaqirildi: ${interaction.commandName}`);
         return;
       }
 
-      // Cooldown, vaqt o'lchash va xatolikni qayta ishlash - hammasi
-      // umumiy qatlamda (commandRunner). Buyruq fayllari o'zgarmaydi.
-      await runCommand(command, interaction, client);
+      try {
+        await command.execute(interaction, client);
+      } catch (error) {
+        console.error(`Buyruq bajarilishida xatolik (${interaction.commandName}):`, error);
+
+        const errorPayload = {
+          content: '❌ Ushbu buyruqni bajarishda kutilmagan xatolik yuz berdi!',
+          ephemeral: true
+        };
+
+        if (interaction.replied || interaction.deferred) {
+          await interaction.followUp(errorPayload).catch(() => {});
+        } else {
+          await interaction.reply(errorPayload).catch(() => {});
+        }
+      }
       return;
     }
 
     // 3. SHAXSIY OVOZLI XONALAR (TEMP VOICE) BOSHQARUVI
+    const { handleTempVoiceInteraction } = require('../utils/tempVoiceManager');
     const handledTempVoice = await handleTempVoiceInteraction(interaction);
     if (handledTempVoice) return;
 
     // 3.1. O'YINGA DO'ST QIDIRISH (LFG) BOSHQARUVI
+    const { handleLfgInteraction } = require('../utils/lfgManager');
     const handledLfg = await handleLfgInteraction(interaction);
     if (handledLfg) return;
 
     // 3.2. SERVER TEKSHIRUVI (VERIFICATION) BOSHQARUVI
+    const { handleVerifyInteraction } = require('../utils/verifyManager');
     const handledVerify = await handleVerifyInteraction(interaction);
     if (handledVerify) return;
 
     // 3.3. MEGA TEAM ARXIVI (TEAM ARCHIVE) BOSHQARUVI
+    const { handleTeamArchiveInteraction } = require('../utils/teamArchiveManager');
     const handledTeamArchive = await handleTeamArchiveInteraction(interaction);
     if (handledTeamArchive) return;
 
     // 3.4. AVATAR TUGMALARI BOSHQARUVI
+    const { handleAvatarInteraction } = require('../commands/general/avatar');
     const handledAvatar = await handleAvatarInteraction(interaction);
     if (handledAvatar) return;
 
@@ -95,7 +106,7 @@ module.exports = {
             (c.name.toLowerCase().includes('ticket') || c.name.toLowerCase().includes('murojaat'))
           );
           if (category) {
-            log.info(`[TICKET TIKLANDI] Kategoriya avtomatik topildi: ${category.name} (${category.id})`);
+            console.log(`[TICKET TIKLANDI] Kategoriya avtomatik topildi: ${category.name} (${category.id})`);
             storage.updateGuildSettings(guild.id, { ticketCategoryId: category.id });
           }
         }
@@ -247,7 +258,7 @@ module.exports = {
             });
           }
         } catch (err) {
-          log.error('Transcript yig\'ishda xatolik:', err.message);
+          console.error('Transcript yig\'ishda xatolik:', err.message);
         }
 
         // Ticket log kanaliga hisobot va faylni yuborish
@@ -289,7 +300,7 @@ module.exports = {
               (c.name.toLowerCase().includes('ticket') || c.name.toLowerCase().includes('murojaat'))
             );
             if (category) {
-              log.info(`[TICKET TIKLANDI] Kategoriya avtomatik topildi: ${category.name} (${category.id})`);
+              console.log(`[TICKET TIKLANDI] Kategoriya avtomatik topildi: ${category.name} (${category.id})`);
               storage.updateGuildSettings(guild.id, { ticketCategoryId: category.id });
             }
           }
@@ -381,7 +392,7 @@ module.exports = {
               `• 🎯 **So'ralgan Rol / Maqsad:** \`${roleTarget}\`\n\n` +
               `📌 *Ma'muriyat quyidagi tugma orqali arizachiga to'g'ridan-to'g'ri rol biriktirishi mumkin.*`
             )
-            .setThumbnail(user.displayAvatarURL())
+            .setThumbnail(user.displayAvatarURL({ dynamic: true }))
             .setFooter({ text: `Arizachi ID: ${user.id} • Cleva Ticket Tizimi` })
             .setTimestamp();
 
@@ -426,7 +437,7 @@ module.exports = {
               .setTimestamp()
           );
         } catch (error) {
-          log.error('Ticket ochishda xatolik:', error);
+          console.error('Ticket ochishda xatolik:', error);
           await interaction.editReply({
             content: `❌ Ticket ochishda xatolik: ${error.message}`
           });
@@ -532,7 +543,7 @@ module.exports = {
             `Kanal: <#${interaction.channelId}>`
           );
         } catch (err) {
-          log.error('Rol berishda xatolik:', err);
+          console.error('Rol berishda xatolik:', err);
           return interaction.reply({
             content: `❌ Rol berishda xatolik yuz berdi: ${err.message}`,
             flags: MessageFlags.Ephemeral

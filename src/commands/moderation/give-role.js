@@ -1,6 +1,5 @@
-const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, MessageFlags } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
 const logger = require('../../utils/logger');
-const log = require('../../utils/log');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -28,7 +27,7 @@ module.exports = {
     if (!targetMember) {
       return interaction.reply({
         content: '❌ Bu foydalanuvchi serverda topilmadi.',
-        flags: MessageFlags.Ephemeral
+        ephemeral: true
       });
     }
 
@@ -37,7 +36,7 @@ module.exports = {
     if (targetRole.position >= botMember.roles.highest.position) {
       return interaction.reply({
         content: `❌ Men bu rolni (${targetRole.name}) bera olmayman, chunki u mening rolimdan yuqori yoki teng darajada joylashgan. Bot rolimni Server Settings -> Roles da yuqoriroqqa surib qo'ying.`,
-        flags: MessageFlags.Ephemeral
+        ephemeral: true
       });
     }
 
@@ -45,14 +44,14 @@ module.exports = {
     if (interaction.user.id !== guild.ownerId && targetRole.position >= interaction.member.roles.highest.position) {
       return interaction.reply({
         content: `❌ Siz o'zingizning eng yuqori rolingizdan yuqori yoki unga teng rolni bera olmaysiz.`,
-        flags: MessageFlags.Ephemeral
+        ephemeral: true
       });
     }
 
     if (targetMember.roles.cache.has(targetRole.id)) {
       return interaction.reply({
         content: `ℹ️ ${targetUser.tag} da allaqachon **${targetRole.name}** roli mavjud.`,
-        flags: MessageFlags.Ephemeral
+        ephemeral: true
       });
     }
 
@@ -81,10 +80,10 @@ module.exports = {
         `Berilgan rol: <@&${targetRole.id}>`
       );
     } catch (error) {
-      log.error('Give-role xatoligi:', error);
+      console.error('Give-role xatoligi:', error);
       return interaction.reply({
         content: `❌ Rol berishda xatolik yuz berdi: ${error.message}`,
-        flags: MessageFlags.Ephemeral
+        ephemeral: true
       });
     }
   }

@@ -1,6 +1,5 @@
-const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder, MessageFlags } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
 const logger = require('../../utils/logger');
-const log = require('../../utils/log');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -26,7 +25,7 @@ module.exports = {
     const filterUser = interaction.options.getUser('user');
     const channel = interaction.channel;
 
-    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+    await interaction.deferReply({ ephemeral: true });
 
     try {
       let messages = await channel.messages.fetch({ limit: 100 });
@@ -63,7 +62,7 @@ module.exports = {
           .setTimestamp()
       );
     } catch (error) {
-      log.error('Clear xatosi:', error);
+      console.error('Clear xatosi:', error);
       await interaction.editReply({
         content: `❌ Xabarlarni o'chirishda xatolik: ${error.message}`
       });
