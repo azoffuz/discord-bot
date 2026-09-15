@@ -40,10 +40,14 @@ module.exports = {
 
     // 2. SLASH BUYRUQLAR (ChatInputCommand)
     if (interaction.isChatInputCommand()) {
+      console.log(`[BUYRUQ KELDI] /${interaction.commandName} | Foydalanuvchi: ${interaction.user.tag} (${interaction.user.id}) | Guild: ${interaction.guildId}`);
       const command = client.commands.get(interaction.commandName);
       if (!command) {
         console.warn(`Noma'lum buyruq chaqirildi: ${interaction.commandName}`);
-        return;
+        return interaction.reply({
+          content: `❌ Noma'lum buyruq: /${interaction.commandName}. Bot qayta yuklanmoqda bo'lishi mumkin.`,
+          ephemeral: true
+        }).catch(() => {});
       }
 
       try {
