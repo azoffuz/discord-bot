@@ -17,6 +17,7 @@
 - `/unlock [channel]` — Qulflangan kanalni qayta ochadi.
 - `/clear [count] [user]` — Chatdagi xabarlarni ommaviy tozalash (1 dan 100 tagacha).
 - `/audit-log [tur] [soni]` — Serverda xabarlarni kim o'chirgani yoki AutoMod bloklaganini Audit Log orqali ko'rish.
+- `/renamechat [channel] [from] [to] [preview]` — Barcha yoki tanlangan kanallardagi belgilarni ommaviy almashtiradi (standart: `"・"` ni `"︱"` ga).
 
 ### ⚙️ Server Sozlamalari va Tizimlar
 - `/set-log [category] [external_category_id] [external_channel_id] [disable]` — **Kategoriyalangan Log Tizimi:** Kategoriya ichida avtomat 5 ta yopiq kanal ochadi (`#xabar-loglari`, `#azo-loglari`, `#moderatsiya-loglari`, `#ticket-loglari`, `#ovozli-loglar`). Shuningdek, boshqa serveringizdagi kategoriya yoki kanal ID sini berish orqali **serverlararo log (Cross-Server Logging)** qilish imkoniyatiga ega.
