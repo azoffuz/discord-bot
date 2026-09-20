@@ -89,6 +89,20 @@ async function checkAndAssignActiveRole(guild, member) {
   const role = guild.roles.cache.get(settings.roleId) || await guild.roles.fetch(settings.roleId).catch(() => null);
   if (!role) return false;
 
+  // TEKSHIRUV: Agar a'zoda chetlatilgan (maxsus) rollar bo'lsa -> Active roli BERILMAYDI!
+  const ignoredRoles = settings.ignoredRoles || [];
+  if (ignoredRoles.length > 0) {
+    const hasIgnoredRole = member.roles.cache.some(r => ignoredRoles.includes(r.id));
+    if (hasIgnoredRole) {
+      // Agar foydalanuvchida maxsus rol bo'lsa va unda Active roli mavjud bo'lsa, uni yechib olamiz
+      if (member.roles.cache.has(role.id)) {
+        await member.roles.remove(role, 'A\'zoda maxsus rol borligi sababli Active roli olib tashlandi').catch(() => {});
+        storage.updateMemberActivity(guild.id, member.id, { hasRole: false });
+      }
+      return false;
+    }
+  }
+
   // Botning rolni berish imkoniyati (ierarxiya)ni tekshirish
   const botMember = guild.members.me;
   if (botMember && botMember.roles.highest.position <= role.position) {
@@ -283,6 +297,14 @@ async function evaluateDailyInactivity(client) {
 
       const hasDiscordRole = member.roles.cache.has(role.id);
       if (!hasDiscordRole) continue;
+
+      // Agar a'zoda e'tibordan chetda qoldiriladigan (maxsus) rol bo'lsa, rolni olib tashlash
+      const ignoredRoles = settings.ignoredRoles || [];
+      if (ignoredRoles.length > 0 && member.roles.cache.some(r => ignoredRoles.includes(r.id))) {
+        await member.roles.remove(role, 'A\'zoda maxsus rol borligi sababli Active roli olib tashlandi').catch(() => {});
+        storage.updateMemberActivity(guild.id, userId, { hasRole: false });
+        continue;
+      }
 
       // Agar foydalanuvchi bugun ham, kecha ham faollik ko'rsatmagan bo'lsa
       // (ya'ni kechadan oldingi kunda olgan va kecha kirmagan / bugun hali kirmagan)

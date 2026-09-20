@@ -2,9 +2,128 @@ const {
   SlashCommandBuilder,
   PermissionFlagsBits,
   ChannelType,
-  EmbedBuilder
+  EmbedBuilder,
+  ActionRowBuilder,
+  RoleSelectMenuBuilder,
+  ButtonBuilder,
+  ButtonStyle
 } = require('discord.js');
 const storage = require('../../config/storage');
+
+const MODE_NAMES = {
+  voice_or_messages: '🎙️ Ovoz YOKI 💬 Chat (Birortasi yetarli)',
+  voice_only: '🎙️ Faqat ovozli xonada o\'tirish',
+  messages_only: '💬 Faqat chatda xabar yozish',
+  voice_and_messages: '⚡ Ovoz VA Chat (Ikkalasi ham shart)'
+};
+
+/**
+ * Chetlatilgan maxsus rollarga ega a'zolardan Active rolni yechib olish
+ */
+async function purgeActiveRoleFromIgnored(guild, settings) {
+  if (!settings.roleId || !Array.isArray(settings.ignoredRoles) || settings.ignoredRoles.length === 0) {
+    return 0;
+  }
+
+  const activeRole = guild.roles.cache.get(settings.roleId) || await guild.roles.fetch(settings.roleId).catch(() => null);
+  if (!activeRole) return 0;
+
+  const botMember = guild.members.me || await guild.members.fetchMe().catch(() => null);
+  if (!botMember || botMember.roles.highest.position <= activeRole.position) return 0;
+
+  let strippedCount = 0;
+  const members = await guild.members.fetch().catch(() => guild.members.cache);
+
+  for (const [, member] of members) {
+    if (member.user.bot) continue;
+    if (member.roles.cache.has(activeRole.id)) {
+      const hasIgnored = member.roles.cache.some(r => settings.ignoredRoles.includes(r.id));
+      if (hasIgnored) {
+        try {
+          await member.roles.remove(activeRole, 'A\'zoda maxsus rol borligi sababli Active roli olib tashlandi');
+          storage.updateMemberActivity(guild.id, member.id, { hasRole: false });
+          strippedCount++;
+        } catch (err) {
+          console.error(`[PURGE ACTIVE ROLE XATOSI] ${member.user.tag}:`, err.message);
+        }
+      }
+    }
+  }
+
+  return strippedCount;
+}
+
+/**
+ * Embed panelini yasash
+ */
+function buildActiveRoleEmbed(guild, settings, actionText = null) {
+  const isEnabled = settings.enabled && settings.roleId;
+  const isSilent = settings.sendMessage === false || settings.silent === true;
+  const sendMsgText = isSilent
+    ? '🔇 **Jim rejim (Aytib o\'tirmay beradi, xabarsiz)**'
+    : (settings.logChannelId ? `📢 **Yoqilgan (<#${settings.logChannelId}> ga yuboriladi)**` : '⚠️ **Kanal belgilanmagan (xabar yuborilmaydi)**');
+
+  const ignoredList = Array.isArray(settings.ignoredRoles) && settings.ignoredRoles.length > 0
+    ? settings.ignoredRoles.map(rId => `<@&${rId}>`).join(', ')
+    : '*Hech qanday maxsus rol chetlatilmagan (Barcha a\'zolarga beriladi)*';
+
+  const embed = new EmbedBuilder()
+    .setColor(isEnabled ? 0x57F287 : 0xFEE75C)
+    .setTitle('⚙️ Kunlik Faollik Roli Tizimi Sozlamalari')
+    .setDescription(
+      `${actionText ? `### 📝 O'zgarish:\n${actionText}\n\n` : ''}` +
+      `**Tizim Holati:** ${isEnabled ? '🟢 **Faol (Yoqilgan)**' : '🔴 **O\'chirilgan / Sozlanmagan**'}\n\n` +
+      `• 🎖️ **Beriladigan Rol:** ${settings.roleId ? `<@&${settings.roleId}>` : '*Belgilanmagan*'}\n` +
+      `• 🎙️ **Talab qilinadigan ovoz:** **${settings.voiceMinutes || 45} daqiqa**\n` +
+      `• 💬 **Talab qilinadigan xabar:** **${settings.messageCount || 20} ta**\n` +
+      `• 🎯 **Hisoblash Tartibi:** ${MODE_NAMES[settings.mode] || MODE_NAMES.voice_or_messages}\n` +
+      `• 📢 **E'lon / Log Kanali:** ${settings.logChannelId ? `<#${settings.logChannelId}>` : '*O\'rnatilmagan*'}\n` +
+      `• 🔕 **Xabar / Bildirishnoma:** ${sendMsgText}\n\n` +
+      `• 🚫 **Chetlatilgan Maxsus Rollar:**\n${ignoredList}\n` +
+      `*(Ushbu roldagi a'zolar qanchalik faol bo'lmasin, ularga @ACTIVE roli berilmaydi)*\n\n` +
+      `• ⏳ **Ertasiga kirmasa:** Rol avtomatik olib tashlanadi (Inactivity Removal)`
+    )
+    .addFields(
+      {
+        name: '💡 Qanday sozlash mumkin?',
+        value:
+          '• **Maxsus rollarni tanlash:** Pastdagi menyudan `@ACTIVE` berilmaydigan rollarni bittalab yoki bir nechtasini belgilang.\n' +
+          '• **Tezkor buyruq:** `/set-active-role exclude_role:@Moderator`\n' +
+          '• **Jim rejim:** `/set-active-role silent:True`\n' +
+          '• **O\'chirish:** `/set-active-role disable:True`'
+      }
+    )
+    .setFooter({ text: 'Cleva • Daily Active Role System' })
+    .setTimestamp();
+
+  return embed;
+}
+
+/**
+ * Interaktiv komponentlarni (Role Select va Tugmalar) yasash
+ */
+function buildActiveRoleComponents(settings) {
+  const roleSelectRow = new ActionRowBuilder().addComponents(
+    new RoleSelectMenuBuilder()
+      .setCustomId('active_role_exclude_select')
+      .setPlaceholder('🚫 @ACTIVE berilmaydigan maxsus rollarni tanlang...')
+      .setMinValues(0)
+      .setMaxValues(25)
+  );
+
+  const buttonRow = new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId('active_role_clear_excluded')
+      .setLabel('🧹 Chetlatilganlarni Tozalash')
+      .setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder()
+      .setCustomId('active_role_purge_now')
+      .setLabel('⚡ Maxsus Rollardagi @ACTIVE ni Yechib Olish')
+      .setStyle(ButtonStyle.Danger)
+  );
+
+  return [roleSelectRow, buttonRow];
+}
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -40,6 +159,21 @@ module.exports = {
           { name: '💬 Faqat chatdagi xabarlar soni', value: 'messages_only' },
           { name: '⚡ Ovoz VA Chat (Ikkalasi ham bajarilishi shart)', value: 'voice_and_messages' }
         )
+        .setRequired(false)
+    )
+    .addRoleOption(option =>
+      option.setName('exclude_role')
+        .setDescription('🚫 Maxsus rol qo\'shish (ushbu roldagi a\'zolarga @ACTIVE berilmaydi)')
+        .setRequired(false)
+    )
+    .addRoleOption(option =>
+      option.setName('remove_excluded_role')
+        .setDescription('Chetlatilgan rolni ro\'yxatdan chiqarish')
+        .setRequired(false)
+    )
+    .addBooleanOption(option =>
+      option.setName('clear_excluded_roles')
+        .setDescription('Barcha chetlatilgan maxsus rollar ro\'yxatini tozalash')
         .setRequired(false)
     )
     .addChannelOption(option =>
@@ -81,6 +215,9 @@ module.exports = {
     const messagesCount = interaction.options.getInteger('messages_count');
     const mode = interaction.options.getString('mode');
     const logChannel = interaction.options.getChannel('log_channel');
+    const excludeRole = interaction.options.getRole('exclude_role');
+    const removeExcludedRole = interaction.options.getRole('remove_excluded_role');
+    const clearExcludedRoles = interaction.options.getBoolean('clear_excluded_roles');
     const sendMessageOpt = interaction.options.getBoolean('send_message');
     const silentOpt = interaction.options.getBoolean('silent');
     const clearLogChannel = interaction.options.getBoolean('clear_log_channel');
@@ -107,129 +244,166 @@ module.exports = {
       return interaction.reply({ embeds: [disableEmbed] });
     }
 
-    // 2. PARAMETR KIRITILMAGAN BO'LSA — JORIY HOLATNI KO'RSATISH
-    if (
-      !role &&
-      voiceMinutes === null &&
-      messagesCount === null &&
-      !mode &&
-      !logChannel &&
-      status === null &&
-      sendMessageOpt === null &&
-      silentOpt === null &&
-      !clearLogChannel
-    ) {
-      const isEnabled = settings.enabled && settings.roleId;
-      const isSilent = settings.sendMessage === false || settings.silent === true;
-      const sendMsgText = isSilent
-        ? '🔇 **Jim rejim (Aytib o\'tirmay beradi, xabarsiz)**'
-        : (settings.logChannelId ? `📢 **Yoqilgan (<#${settings.logChannelId}> ga yuboriladi)**` : '⚠️ **Kanal belgilanmagan (xabar yuborilmaydi)**');
+    // 2. PARAMETR KIRITILMAGAN BO'LSA — JORIY HOLATNI KO'RSATISH (Interaktiv menyu bilan)
+    const hasAnyOption = role ||
+      voiceMinutes !== null ||
+      messagesCount !== null ||
+      mode ||
+      logChannel ||
+      excludeRole ||
+      removeExcludedRole ||
+      clearExcludedRoles ||
+      sendMessageOpt !== null ||
+      silentOpt !== null ||
+      clearLogChannel ||
+      status !== null;
 
-      const modeNames = {
-        voice_or_messages: '🎙️ Ovoz YOKI 💬 Chat (Birortasi yetarli)',
-        voice_only: '🎙️ Faqat ovozli xonada o\'tirish',
-        messages_only: '💬 Faqat chatda xabar yozish',
-        voice_and_messages: '⚡ Ovoz VA Chat (Ikkalasi ham shart)'
-      };
+    let changesText = null;
 
-      const statusEmbed = new EmbedBuilder()
-        .setColor(isEnabled ? 0x57F287 : 0xFEE75C)
-        .setTitle('⚙️ Kunlik Faollik Roli Tizimi Sozlamalari')
-        .setDescription(
-          `**Tizim Holati:** ${isEnabled ? '🟢 **Faol (Yoqilgan)**' : '🔴 **O\'chirilgan / Sozlanmagan**'}\n\n` +
-          `• 🎖️ **Beriladigan Rol:** ${settings.roleId ? `<@&${settings.roleId}>` : '*Belgilanmagan*'}\n` +
-          `• 🎙️ **Talab qilinadigan ovoz:** **${settings.voiceMinutes || 45} daqiqa**\n` +
-          `• 💬 **Talab qilinadigan xabar:** **${settings.messageCount || 20} ta**\n` +
-          `• 🎯 **Hisoblash Tartibi:** ${modeNames[settings.mode] || modeNames.voice_or_messages}\n` +
-          `• 📢 **E'lon / Log Kanali:** ${settings.logChannelId ? `<#${settings.logChannelId}>` : '*O\'rnatilmagan*'}\n` +
-          `• 🔕 **Xabar / Bildirishnoma:** ${sendMsgText}\n` +
-          `• ⏳ **Ertasiga kirmasa:** Rol avtomatik olib tashlanadi (Inactivity Removal)`
-        )
-        .addFields({
-          name: '💡 Qanday sozlash mumkin?',
-          value:
-            '• **Tezkor yoqish:** `/set-active-role role:@Faol voice_minutes:45 messages_count:20`\n' +
-            '• **Jim rejim (aytib o\'tirmaslik):** `/set-active-role send_message:False` *(yoki `silent:True`)*\n' +
-            '• **Xabarlarni qayta yoqish:** `/set-active-role send_message:True`\n' +
-            '• **Faqat ovozli xona uchun:** `/set-active-role role:@Faol mode:voice_only voice_minutes:60`\n' +
-            '• **O\'chirish:** `/set-active-role disable:True`'
-        })
-        .setFooter({ text: 'Cleva • Daily Active Role System' })
-        .setTimestamp();
-
-      return interaction.reply({ embeds: [statusEmbed] });
-    }
-
-    // 3. YANGI SOZLAMALARNI SAQLASH
-    await interaction.deferReply();
-
-    // Bot ierarxiyasini tekshirish
-    if (role) {
-      const botMember = guild.members.me;
-      if (botMember && botMember.roles.highest.position <= role.position) {
-        return interaction.editReply({
-          content: `❌ Botning roli (**${botMember.roles.highest.name}**) siz tanlagan roldan (**${role.name}**) pastda yoki teng! Iltimos, server sozlamalarida bot rolini yuqoriroqqa qo'ying.`
-        });
+    if (hasAnyOption) {
+      // Bot ierarxiyasini tekshirish
+      if (role) {
+        const botMember = guild.members.me;
+        if (botMember && botMember.roles.highest.position <= role.position) {
+          return interaction.reply({
+            content: `❌ Botning roli (**${botMember.roles.highest.name}**) siz tanlagan roldan (**${role.name}**) pastda yoki teng! Iltimos, server sozlamalarida bot rolini yuqoriroqqa qo'ying.`,
+            ephemeral: true
+          });
+        }
       }
+
+      const updatePayload = {};
+      const changesList = [];
+
+      if (role) {
+        updatePayload.roleId = role.id;
+        changesList.push(`• Faollik roli <@&${role.id}> ga o'rnatildi.`);
+      }
+      if (voiceMinutes !== null) {
+        updatePayload.voiceMinutes = voiceMinutes;
+        changesList.push(`• Kunlik ovoz normasi: **${voiceMinutes} daqiqa**.`);
+      }
+      if (messagesCount !== null) {
+        updatePayload.messageCount = messagesCount;
+        changesList.push(`• Kunlik xabar normasi: **${messagesCount} ta**.`);
+      }
+      if (mode) {
+        updatePayload.mode = mode;
+        changesList.push(`• Hisoblash tartibi: **${MODE_NAMES[mode] || mode}**.`);
+      }
+      if (logChannel) {
+        updatePayload.logChannelId = logChannel.id;
+        changesList.push(`• Tabriknoma kanali <#${logChannel.id}> ga o'rnatildi.`);
+      }
+      if (clearLogChannel) {
+        updatePayload.logChannelId = null;
+        changesList.push('• Tabriknoma kanali tozalandi.');
+      }
+
+      // Maxsus rollarni chetlatish (Exclude / Ignore)
+      let currentIgnored = Array.isArray(settings.ignoredRoles) ? [...settings.ignoredRoles] : [];
+      if (excludeRole) {
+        if (!currentIgnored.includes(excludeRole.id)) {
+          currentIgnored.push(excludeRole.id);
+          updatePayload.ignoredRoles = currentIgnored;
+          changesList.push(`• 🚫 Chetlatilgan rol qo'shildi: <@&${excludeRole.id}> (ushbu roldagilarga @ACTIVE berilmaydi).`);
+        } else {
+          changesList.push(`• ℹ️ <@&${excludeRole.id}> allaqachon chetlatilgan rollar ro'yxatida bor.`);
+        }
+      }
+      if (removeExcludedRole) {
+        currentIgnored = currentIgnored.filter(id => id !== removeExcludedRole.id);
+        updatePayload.ignoredRoles = currentIgnored;
+        changesList.push(`• ✅ <@&${removeExcludedRole.id}> chetlatilganlar ro'yxatidan chiqarildi.`);
+      }
+      if (clearExcludedRoles) {
+        updatePayload.ignoredRoles = [];
+        changesList.push('• 🧹 Barcha chetlatilgan maxsus rollar tozalandi.');
+      }
+
+      if (sendMessageOpt !== null) {
+        updatePayload.sendMessage = sendMessageOpt;
+        updatePayload.silent = !sendMessageOpt;
+        changesList.push(`• Xabar jo'natish: **${sendMessageOpt ? 'Yoqildi' : 'O\'chirildi (Jim rejim)'}**.`);
+      }
+      if (silentOpt !== null) {
+        updatePayload.sendMessage = !silentOpt;
+        updatePayload.silent = silentOpt;
+        changesList.push(`• Jim rejim: **${silentOpt ? 'Yoqildi' : 'O\'chirildi'}**.`);
+      }
+
+      if (status !== null) {
+        updatePayload.enabled = status;
+        changesList.push(`• Tizim: **${status ? 'Yoqildi' : 'To\'xtatildi'}**.`);
+      } else if (role || updatePayload.roleId || settings.roleId) {
+        updatePayload.enabled = true;
+      }
+
+      const updatedSettings = storage.updateActiveRoleSettings(guild.id, updatePayload);
+
+      // Agar chetlatilgan rollar qo'shilgan bo'lsa, o'sha roldagi a'zolardan @ACTIVE ni yechib olish
+      if (excludeRole || updatePayload.ignoredRoles) {
+        const purged = await purgeActiveRoleFromIgnored(guild, updatedSettings);
+        if (purged > 0) {
+          changesList.push(`• ⚡ Maxsus rolga ega **${purged} ta** a'zodan mavjud @ACTIVE roli olib tashlandi.`);
+        }
+      }
+
+      changesText = changesList.join('\n');
     }
 
-    const updatePayload = {};
-    if (role) updatePayload.roleId = role.id;
-    if (voiceMinutes !== null) updatePayload.voiceMinutes = voiceMinutes;
-    if (messagesCount !== null) updatePayload.messageCount = messagesCount;
-    if (mode) updatePayload.mode = mode;
-    if (logChannel) updatePayload.logChannelId = logChannel.id;
-    if (clearLogChannel) updatePayload.logChannelId = null;
+    const currentSettings = storage.getActiveRoleSettings(guild.id);
+    const embed = buildActiveRoleEmbed(guild, currentSettings, changesText);
+    const components = buildActiveRoleComponents(currentSettings);
 
-    if (sendMessageOpt !== null) {
-      updatePayload.sendMessage = sendMessageOpt;
-      updatePayload.silent = !sendMessageOpt;
-    }
-    if (silentOpt !== null) {
-      updatePayload.sendMessage = !silentOpt;
-      updatePayload.silent = silentOpt;
-    }
+    const replyMessage = await interaction.reply({
+      embeds: [embed],
+      components,
+      fetchReply: true
+    });
 
-    if (status !== null) updatePayload.enabled = status;
-    else if (role || updatePayload.roleId || settings.roleId) updatePayload.enabled = true;
+    // Interaktiv collector (5 daqiqa faol bo'ladi)
+    const collector = replyMessage.createMessageComponentCollector({
+      filter: i => i.user.id === interaction.user.id,
+      time: 300_000
+    });
 
-    const updated = storage.updateActiveRoleSettings(guild.id, updatePayload);
+    collector.on('collect', async i => {
+      const liveSettings = storage.getActiveRoleSettings(guild.id);
+      let actionInfo = '';
 
-    const modeLabels = {
-      voice_or_messages: '🎙️ Ovoz YOKI 💬 Chat (Birortasi yetarli)',
-      voice_only: '🎙️ Faqat ovozli xonada o\'tirish',
-      messages_only: '💬 Faqat chatda xabar yozish',
-      voice_and_messages: '⚡ Ovoz VA Chat (Ikkalasi ham shart)'
-    };
+      if (i.customId === 'active_role_exclude_select') {
+        const selected = i.values.filter(rId => rId !== guild.id);
+        liveSettings.ignoredRoles = selected;
+        storage.updateActiveRoleSettings(guild.id, { ignoredRoles: selected });
 
-    const isSilent = updated.sendMessage === false || updated.silent === true;
-    const sendMsgDisplay = isSilent
-      ? '🔇 **Jim rejim (Aytib o\'tirmay, xabarsiz beradi)**'
-      : (updated.logChannelId ? `📢 **Yoqilgan (<#${updated.logChannelId}> ga yuboriladi)**` : '⚠️ **Kanal belgilanmagan (xabar yuborilmaydi)**');
+        const purged = await purgeActiveRoleFromIgnored(guild, liveSettings);
+        actionInfo = `• 🚫 Chetlatilgan rollar yangilandi (${selected.length} ta rol tanlandi).` +
+          (purged > 0 ? `\n• ⚡ Maxsus rolga ega **${purged} ta** a'zodan @ACTIVE roli yechib olindi.` : '');
+      } else if (i.customId === 'active_role_clear_excluded') {
+        liveSettings.ignoredRoles = [];
+        storage.updateActiveRoleSettings(guild.id, { ignoredRoles: [] });
+        actionInfo = '• 🧹 Barcha chetlatilgan maxsus rollar tozalandi.';
+      } else if (i.customId === 'active_role_purge_now') {
+        const purged = await purgeActiveRoleFromIgnored(guild, liveSettings);
+        actionInfo = purged > 0
+          ? `• ⚡ Maxsus rolga ega bo'lgan **${purged} ta** a'zodan @ACTIVE roli muvaffaqiyatli yechib olindi.`
+          : '• ℹ️ Hozirda maxsus rolga ega bo\'lib @ACTIVE rolini ushlab turgan a\'zo topilmadi.';
+      }
 
-    const successEmbed = new EmbedBuilder()
-      .setColor(0x57F287)
-      .setTitle('✅ Kunlik Faollik Roli Tizimi Muvaffaqiyatli Sozlandi!')
-      .setDescription(
-        'Serverda kunlik mezonlarni bajargan a\'zolarga avtomatik rol beriladi va keyingi kuni kirmasa avtomatik olib tashlanadi.\n\n' +
-        `• 🎖️ **Faollik Roli:** ${updated.roleId ? `<@&${updated.roleId}>` : '*Belgilanmagan*'}\n` +
-        `• 🟢 **Holati:** ${updated.enabled ? 'Yoqilgan' : 'O\'chirilgan'}\n` +
-        `• 🎙️ **Kunlik ovoz normasi:** **${updated.voiceMinutes} daqiqa**\n` +
-        `• 💬 **Kunlik xabar normasi:** **${updated.messageCount} ta**\n` +
-        `• 🎯 **Hisoblash tartibi:** ${modeLabels[updated.mode] || modeLabels.voice_or_messages}\n` +
-        `• 📢 **Tabriknoma kanali:** ${updated.logChannelId ? `<#${updated.logChannelId}>` : '*O\'rnatilmagan*'}\n` +
-        `• 🔕 **Xabar / Bildirishnoma:** ${sendMsgDisplay}`
-      )
-      .addFields({
-        name: '🚀 Tizim qoidalari:',
-        value:
-          `1. A\'zo mezonni bajarsa — unga **darhol** rol beriladi ${isSilent ? '*(jim rejimda, aytib o\'tirmasdan)*' : '*(va tabriknoma jo\'natiladi)*'};\n` +
-          `2. Agar a\'zo ertasi kuni kirmasa yoki faol bo\'lmasa — roldan **avtomatik** mahrum etiladi ${isSilent ? '*(jim rejimda)*' : ''};\n` +
-          '3. Har bir a\'zo o\'z faolligini istalgan payt **/activity** buyrug\'i orqali tekshirib borishi mumkin.'
-      })
-      .setFooter({ text: 'Cleva • Daily Active Role System' })
-      .setTimestamp();
+      const newEmbed = buildActiveRoleEmbed(guild, liveSettings, actionInfo);
+      const newComponents = buildActiveRoleComponents(liveSettings);
 
-    return interaction.editReply({ embeds: [successEmbed] });
+      await i.update({
+        embeds: [newEmbed],
+        components: newComponents
+      }).catch(() => {});
+    });
+
+    collector.on('end', () => {
+      replyMessage.edit({
+        components: []
+      }).catch(() => {});
+    });
   }
 };

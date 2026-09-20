@@ -28,6 +28,7 @@
 - `/set-stats [status] [external_category_id] [external_guild_id] [category]` — **Server Statistikasi & Cross-Server Stats:** Jonli ovozli hisoblagich kanallari: 👥 Jami A'zolar, 👤 Oddiy A'zolar, 🤖 Botlar, 🟢 Onlayn A'zolar, 🚀 Boosterlar, 🎙️ Ovozdagilar. O'z serveringizda yoki 2-serveringizda (Cross-Server) ochish, o'chirish va yangilash.
 - `/set-tempvoice status:[enable/disable]` — **Shaxsiy Ovozli Xonalar:** "➕ Xona Yaratish" ga kirganda yangi xona ochib ko'chirish va bo'shagach o'chirish.
 - `/set-level status:[enable/disable] [channel]` — **Level & XP Sozlamasi:** Chatda faollik uchun daraja oshirish tizimini yoqish/o'chirish.
+- `/set-active-role [role] [voice_minutes] [messages_count] [mode] [exclude_role] [remove_excluded_role] [clear_excluded_roles] [log_channel] [send_message] [silent] [status] [disable]` — **Kunlik Faollik Roli:** Ovoz va chatda normani bajarganlarga avtomat rol berish va kirmasa olib tashlash. Shuningdek, maxsus rollari bor a'zolarga (Admin, Moder, MEGA TEAM) @ACTIVE berilmasligi uchun istalgan rollarni chetlatish (exclude/ignore) va avtomat tozalash imkoniyati.
 - `/set-media-roles [status] [add_role] [remove_role] [clear_all]` — **Rasm va GIF Cheklovi (Media-Roles):** Faqat tanlangan rollarga rasm/GIF yuborish huquqini berish. Ruxsatsiz yuborilgan rasmlar avtomatik o'chiriladi.
 - `/set-youtube` (yoki `/set-video`) `[youtube_channel] [channel] [ping_role] [message] [test]` — **YouTube Avto-Xabarnoma (Notifier):** YouTube kanaliga yangi video yoki Shorts yuklanganda Discord kanaliga avtomat e'lon qilish.
 

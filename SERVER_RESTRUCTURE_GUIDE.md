@@ -558,6 +558,7 @@ Ushbu ishlarni tartib bilan bajaring:
 ```text
 /set-active-role role:@ACTIVE voice_minutes:45 messages_count:20 mode:voice_or_messages send_message:False
 ```
+*(Maxsus rollarga — masalan: `@Moderator`, `@🛡️ Head Staff`, `@MEGA TEAM` kabi rollarga `@ACTIVE` roli berilmasligi uchun, buyruqdan so'ng pastdagi rol tanlash menyusidan ushbu maxsus rollarni belgilang yoki `/set-active-role exclude_role:@Rol` buyrug'ini bering).*
 
 #### 5. Shaxsiy Ovozli Xonalar (TempVoice):
 ```text

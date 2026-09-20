@@ -52,9 +52,14 @@ module.exports = {
       voice_and_messages: '⚡ Ovoz VA Chat (Ikkalasi ham shart)'
     };
 
+    const ignoredRoles = settings.ignoredRoles || [];
+    const hasIgnoredRole = targetMember ? targetMember.roles.cache.some(r => ignoredRoles.includes(r.id)) : false;
+
     let statusText = '';
     if (!settings.enabled || !role) {
       statusText = '⚠️ *Ushbu serverda kunlik faollik roli hozircha sozlanmagan.*';
+    } else if (hasIgnoredRole) {
+      statusText = '👑 **Sizda maxsus rol mavjud bo\'lganligi sababli ushbu faollik roli berilmaydi.**';
     } else if (hasRole) {
       statusText = `🎉 **Sizda <@&${role.id}> roli mavjud!** (Faol a'zo)`;
     } else {

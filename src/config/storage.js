@@ -627,8 +627,13 @@ module.exports = {
       logChannelId: null,
       sendMessage: true,
       silent: false,
+      ignoredRoles: [],
       members: {}
     };
+
+    if (!Array.isArray(activeRole.ignoredRoles)) {
+      activeRole.ignoredRoles = [];
+    }
 
     if (activeRole.sendMessage === undefined) {
       activeRole.sendMessage = activeRole.silent !== undefined ? !activeRole.silent : true;
@@ -652,13 +657,20 @@ module.exports = {
         logChannelId: null,
         sendMessage: true,
         silent: false,
+        ignoredRoles: [],
         members: {}
       };
+    }
+    if (!Array.isArray(settings.activeRole.ignoredRoles)) {
+      settings.activeRole.ignoredRoles = [];
     }
     settings.activeRole = {
       ...settings.activeRole,
       ...newSettings
     };
+    if (Array.isArray(newSettings.ignoredRoles)) {
+      settings.activeRole.ignoredRoles = newSettings.ignoredRoles;
+    }
     if (settings.activeRole.sendMessage !== undefined && newSettings.silent === undefined) {
       settings.activeRole.silent = !settings.activeRole.sendMessage;
     } else if (settings.activeRole.silent !== undefined && newSettings.sendMessage === undefined) {
