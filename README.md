@@ -37,7 +37,7 @@
 - `/set-youtube` (yoki `/set-video`) `[youtube_channel] [channel] [ping_role] [message] [test]` — **YouTube Avto-Xabarnoma (Notifier):** YouTube kanaliga yangi video yoki Shorts yuklanganda Discord kanaliga avtomat e'lon qilish.
 
 ### 📢 E'lonlar va So'rovnomalar
-- `/say [message] [channel]` — Bot nomidan istalgan kanalda oddiy matnli xabar yuborish.
+- `/say [message] [channel]` — Bot nomidan istalgan kanalda oddiy matnli xabar yuborish (Faqat Server Egasi uchun).
 - `/embed [title] [description] [color] [image] [thumbnail] [footer] [channel]` — Bot nomidan chiroyli ramkali, rangli va rasmli rasmiy e'lon chiqarish.
 - `/poll [question] [option1] [option2] [option3..5]` — 2 dan 5 tagacha variantli ovoz berish so'rovnomasi. Foydalanuvchilar emojilar orqali ovoz berishadi.
 

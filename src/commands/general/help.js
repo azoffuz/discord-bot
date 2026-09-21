@@ -180,7 +180,7 @@ module.exports = {
         .addFields(
           {
             name: '`/say [message] [channel]`',
-            value: 'Bot nomidan istalgan kanalda oddiy matnli xabar yuborish.'
+            value: 'Bot nomidan istalgan kanalda oddiy matnli xabar yuborish (Faqat Server Egasi).'
           },
           {
             name: '`/embed [title] [description] [color] [image] [thumbnail] [footer] [channel]`',
