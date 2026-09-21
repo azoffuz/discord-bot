@@ -728,5 +728,52 @@ module.exports = {
   getAllActiveMembers(guildId) {
     const activeSettings = this.getActiveRoleSettings(guildId);
     return activeSettings.members || {};
+  },
+
+  // ===================== TAQIQLANGAN SO'ZLAR (BAD WORDS) METODLARI =====================
+  getBadWords(guildId) {
+    const settings = this.getGuildSettings(guildId);
+    return Array.isArray(settings.badWords) ? settings.badWords : [];
+  },
+
+  addBadWords(guildId, words) {
+    const settings = this.getGuildSettings(guildId);
+    const current = Array.isArray(settings.badWords) ? [...settings.badWords] : [];
+    const added = [];
+
+    const toAdd = Array.isArray(words) ? words : [words];
+    for (const w of toAdd) {
+      if (typeof w !== 'string') continue;
+      const clean = w.trim().toLowerCase();
+      if (clean && !current.includes(clean)) {
+        current.push(clean);
+        added.push(clean);
+      }
+    }
+
+    this.updateGuildSettings(guildId, { badWords: current, badWordsEnabled: true });
+    return { added, total: current };
+  },
+
+  removeBadWord(guildId, word) {
+    const settings = this.getGuildSettings(guildId);
+    let current = Array.isArray(settings.badWords) ? [...settings.badWords] : [];
+    const clean = (word || '').trim().toLowerCase();
+    const initialLen = current.length;
+    current = current.filter(w => w !== clean);
+    const removed = current.length < initialLen;
+    this.updateGuildSettings(guildId, { badWords: current });
+    return { removed, total: current };
+  },
+
+  clearBadWords(guildId) {
+    this.updateGuildSettings(guildId, { badWords: [] });
+    return true;
+  },
+
+  setBadWordsEnabled(guildId, enabled) {
+    this.updateGuildSettings(guildId, { badWordsEnabled: enabled });
+    return enabled;
   }
 };
+

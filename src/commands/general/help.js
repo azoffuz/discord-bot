@@ -16,8 +16,8 @@ module.exports = {
       )
       .addFields(
         {
-          name: '🛡️ Moderatsiya va Xavfsizlik (10 ta buyruq)',
-          value: '`/give-role`, `/remove-role-from`, `/mute`, `/unmute`, `/del-warn`, `/warns`, `/lock`, `/unlock`, `/clear`, `/audit-log`',
+          name: '🛡️ Moderatsiya va Xavfsizlik (14 ta buyruq)',
+          value: '`/give-role`, `/remove-role-from`, `/mute`, `/unmute`, `/del-warn`, `/warns`, `/lock`, `/unlock`, `/clear`, `/addbadword`, `/delbadword`, `/badwords`, `/addxp`, `/renamechat`, `/audit-log`',
           inline: false
         },
         {
@@ -81,6 +81,22 @@ module.exports = {
           {
             name: '`/clear [count] [user]`',
             value: 'Chatdagi xabarlarni 1 dan 100 tagacha tozalaydi (foydalanuvchi filtri bilan).'
+          },
+          {
+            name: '`/addbadword word:[so\'z]`',
+            value: 'Serverga yangi taqiqlangan haqoratli so\'z qo\'shadi (bir nechta bo\'lsa vergul bilan ajrating). Chatda yozilsa yoki tahrirlansa xabar o\'chiriladi va ogohlantiradi.'
+          },
+          {
+            name: '`/delbadword [word] [clear_all]`',
+            value: 'Taqiqlangan haqoratli so\'zni ro\'yxatdan olib tashlaydi yoki barchasini tozalaydi.'
+          },
+          {
+            name: '`/badwords [status]`',
+            value: 'Serverdagi taqiqlangan so\'zlar ro\'yxati (spoiler bilan) va filtr holatini ko\'rsatadi hamda yoqish/o\'chirish imkonini beradi.'
+          },
+          {
+            name: '`/renamechat [channel] [from] [to] [preview]`',
+            value: 'Barcha yoki tanlangan kanallardagi belgilarni ommaviy almashtiradi (standart: "・" ni "︱" ga).'
           },
           {
             name: '`/audit-log [tur] [soni]`',

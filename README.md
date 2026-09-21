@@ -16,6 +16,10 @@
 - `/lock [channel] [reason]` — Kanalni oddiy a'zolar uchun yozishdan vaqtincha qulflaydi (Lockdown).
 - `/unlock [channel]` — Qulflangan kanalni qayta ochadi.
 - `/clear [count] [user]` — Chatdagi xabarlarni ommaviy tozalash (1 dan 100 tagacha).
+- `/addbadword [word]` — Serverga yangi taqiqlangan haqoratli so'z qo'shish (bir nechta bo'lsa vergul bilan ajratiladi). Chatda yozilsa yoki tahrirlansa xabar avtomat o'chiriladi va `⚠️ iltimos, haqoratli so'z ishlatmang!` deb ogohlantiradi.
+- `/delbadword [word] [clear_all]` — Taqiqlangan haqoratli so'zni ro'yxatdan olib tashlash yoki barchasini tozalash.
+- `/badwords [status]` — Serverdagi taqiqlangan so'zlar ro'yxatini (spoiler bilan) va AutoMod holatini ko'rish hamda yoqish/o'chirish.
+- `/addxp [user] [amount]` — Foydalanuvchiga qo'shimcha XP qo'shish yoki ayirish (daraja va leaderboardni boshqarish).
 - `/audit-log [tur] [soni]` — Serverda xabarlarni kim o'chirgani yoki AutoMod bloklaganini Audit Log orqali ko'rish.
 - `/renamechat [channel] [from] [to] [preview]` — Barcha yoki tanlangan kanallardagi belgilarni ommaviy almashtiradi (standart: `"・"` ni `"︱"` ga).
 

@@ -2,6 +2,7 @@ const { PermissionFlagsBits, EmbedBuilder } = require('discord.js');
 const storage = require('../config/storage');
 const logger = require('../utils/logger');
 const { checkMessageLinks, hasMediaContent } = require('../utils/linkFilter');
+const { containsBadWord } = require('../utils/badWordsFilter');
 
 module.exports = {
   name: 'messageCreate',
@@ -10,6 +11,50 @@ module.exports = {
 
     const guild = message.guild;
     const settings = storage.getGuildSettings(guild.id);
+
+    // 0. TAQIQLANGAN HAQORATLI SO'ZLAR TEKSHIRUVI (AutoMod - Bad Words)
+    if (settings.badWordsEnabled !== false && Array.isArray(settings.badWords) && settings.badWords.length > 0) {
+      const member = message.member;
+      const isOwner = process.env.OWNER_ID && message.author.id === process.env.OWNER_ID.trim();
+      const isStaff = member && (
+        member.permissions.has(PermissionFlagsBits.Administrator) ||
+        member.permissions.has(PermissionFlagsBits.ManageMessages) ||
+        member.permissions.has(PermissionFlagsBits.ManageGuild)
+      );
+
+      if (!isOwner && !isStaff) {
+        const badWordCheck = containsBadWord(message.content, settings.badWords);
+        if (badWordCheck.hasBadWord) {
+          try {
+            await message.delete().catch(() => {});
+
+            const warnMsg = await message.channel.send({
+              content: `⚠️ ${message.author}, iltimos, haqoratli so'z ishlatmang! Serverda odob-axloq qoidalariga rioya qiling.`,
+              allowedMentions: { parse: [] }
+            }).catch(() => null);
+
+            if (warnMsg) {
+              setTimeout(() => {
+                warnMsg.delete().catch(() => {});
+              }, 5000);
+            }
+
+            await logger.logModAction(
+              guild,
+              'Haqoratli So\'z To\'xtatildi (AutoMod)',
+              guild.client.user,
+              message.author,
+              `Taqiqlangan so'z ishlatildi: ||${badWordCheck.matchedWord}||`,
+              `Kanal: <#${message.channel.id}>\nXabar: ||${message.content.slice(0, 500)}||`
+            ).catch(() => {});
+
+            return; // Haqoratli so'z yozganga XP berilmaydi
+          } catch (err) {
+            console.error('Bad words tekshirishda xatolik:', err.message);
+          }
+        }
+      }
+    }
 
     // 1. ANTI-LINK VA ANTI-INVITE TEKSHIRUVI (Domen oq ro'yxati va GIF'lar bilan)
     if (settings.antiLinkEnabled !== false) {
