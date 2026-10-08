@@ -21,7 +21,7 @@ module.exports = {
           inline: false
         },
         {
-          name: '⚙️ Server Sozlamalari (14 ta tizim)',
+          name: '⚙️ Server Sozlamalari (15 ta tizim)',
           value: '`/set-active-role`, `/set-team-archive-chat`, `/setup-core`, `/set-log`, `/set-welcome`, `/set-ticket`, `/set-autorole`, `/set-verify`, `/set-antilink`, `/set-media-roles`, `/set-stats`, `/set-tempvoice`, `/set-level`, `/set-youtube` (`/set-video`)',
           inline: false
         },
@@ -169,6 +169,10 @@ module.exports = {
           {
             name: '`/set-youtube` yoki `/set-video [youtube_channel] [channel] [ping_role] [test]`',
             value: 'YouTube kanaliga yangi video yoki Shorts yuklanganda Discord kanaliga avtomatik e\'lon qilish (YouTube Notifier).'
+          },
+          {
+            name: '`/backup [create | list | load | delete]`',
+            value: 'Server tuzilmasi, rollari, kanallari va bot sozlamalarini JSON faylga zaxiralaydi hamda zaxiradan tiklaydi (faqat Administrator).'
           }
         )
         .setFooter({ text: 'Ruxsat: Administrator yoki Manage Server' }),
