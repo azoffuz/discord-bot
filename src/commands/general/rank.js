@@ -1,5 +1,12 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const storage = require('../../config/storage');
+const { MESSAGE_XP, VOICE_XP } = require('../../utils/levelCurve');
+const { getMemberFilter } = require('../../utils/levelManager');
+
+function formatVoice(minutes) {
+  const h = Math.floor(minutes / 60);
+  return h > 0 ? `${h} soat ${minutes % 60} daq` : `${minutes} daq`;
+}
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -15,9 +22,8 @@ module.exports = {
   async execute(interaction) {
     const targetUser = interaction.options.getUser('user') || interaction.user;
     const guild = interaction.guild;
-    const stats = storage.getUserLevel(guild.id, targetUser.id);
 
-    if (!stats.enabled) {
+    if (!storage.getGuildSettings(guild.id).leveling.enabled) {
       const disabledEmbed = new EmbedBuilder()
         .setColor(0xED4245)
         .setTitle('ℹ️ Level & XP Tizimi O\'chirilgan')
@@ -30,10 +36,17 @@ module.exports = {
       return interaction.reply({ embeds: [disabledEmbed] });
     }
 
+    // O'rin serverda qolgan a'zolar orasida hisoblanadi (a'zolarni yuklash vaqt olishi mumkin)
+    await interaction.deferReply();
+    const isMember = await getMemberFilter(guild);
+    const stats = storage.getUserLevel(guild.id, targetUser.id, { isMember });
+
     const percentage = Math.min(100, Math.floor((stats.xp / stats.requiredXP) * 100));
     const filledBlocks = Math.min(10, Math.max(0, Math.round(percentage / 10)));
     const emptyBlocks = 10 - filledBlocks;
     const progressBar = '█'.repeat(filledBlocks) + '░'.repeat(emptyBlocks);
+
+    const nextReward = storage.getLevelRewards(guild.id).rewards.find(r => r.level > stats.level);
 
     const rankEmbed = new EmbedBuilder()
       .setColor(0x5865F2)
@@ -47,7 +60,7 @@ module.exports = {
         },
         {
           name: '🥇 Serverdagi O\'rni',
-          value: `**#${stats.rank}**`,
+          value: stats.rank ? `**#${stats.rank}**` : '*Reytingsiz*',
           inline: true
         },
         {
@@ -56,19 +69,34 @@ module.exports = {
           inline: true
         },
         {
+          name: '🎙️ Ovozda',
+          value: `**${formatVoice(stats.voiceMinutes)}**`,
+          inline: true
+        },
+        {
           name: '✨ Tajriba (XP)',
-          value: `**${stats.xp}** / **${stats.requiredXP}** XP (${percentage}%)`,
+          value: `**${stats.xp}** / **${stats.requiredXP}** XP • Jami: **${stats.totalXp}** XP`,
           inline: false
         },
         {
           name: '📈 Keyingi Darajagacha Progress',
-          value: `\`[${progressBar}]\` **${percentage}%**`,
+          value: `\`[${progressBar}]\` **${percentage}%** • Qoldi: **${stats.remainingXP}** XP`,
           inline: false
         }
-      )
-      .setFooter({ text: 'Cleva • Har bir xabar uchun 15-25 XP beriladi' })
+      );
+
+    if (nextReward) {
+      rankEmbed.addFields({
+        name: '🎁 Keyingi Mukofot',
+        value: `<@&${nextReward.roleId}> — **${nextReward.level}-daraja**`,
+        inline: false
+      });
+    }
+
+    rankEmbed
+      .setFooter({ text: `Cleva • Chat: daqiqada bir marta ${MESSAGE_XP.min}-${MESSAGE_XP.max} XP • Ovoz: daqiqasiga ${VOICE_XP.perMinute} XP` })
       .setTimestamp();
 
-    return interaction.reply({ embeds: [rankEmbed] });
+    return interaction.editReply({ embeds: [rankEmbed] });
   }
 };

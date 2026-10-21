@@ -1,8 +1,9 @@
-const { PermissionFlagsBits, EmbedBuilder } = require('discord.js');
+const { PermissionFlagsBits } = require('discord.js');
 const storage = require('../config/storage');
 const logger = require('../utils/logger');
 const { checkMessageLinks, hasMediaContent } = require('../utils/linkFilter');
 const { containsBadWord } = require('../utils/badWordsFilter');
+const { handleMessageXp } = require('../utils/levelManager');
 
 module.exports = {
   name: 'messageCreate',
@@ -156,23 +157,9 @@ module.exports = {
 
     // 3. LEVEL & XP TIZIMI (Agar faollashtirilgan bo'lsa)
     if (settings.leveling && settings.leveling.enabled) {
-      const xpResult = storage.addXP(guild.id, message.author.id);
-      if (xpResult && xpResult.leveledUp) {
-        const notifyChannelId = settings.leveling.channelId;
-        const targetChannel = notifyChannelId ? guild.channels.cache.get(notifyChannelId) : message.channel;
-
-        if (targetChannel && targetChannel.isTextBased()) {
-          const levelEmbed = new EmbedBuilder()
-            .setColor(0xFEE75C)
-            .setTitle('🎉 Daraja Ko\'tarildi!')
-            .setDescription(`Ajoyib faollik, ${message.author}! Siz **${xpResult.newLevel}-darajaga** erishdingiz! 🚀`)
-            .setThumbnail(message.author.displayAvatarURL({ dynamic: true, size: 256 }))
-            .setFooter({ text: `Cleva Leveling • Keyingi darajagacha: ${xpResult.requiredXP} XP` })
-            .setTimestamp();
-
-          targetChannel.send({ embeds: [levelEmbed] }).catch(() => {});
-        }
-      }
+      await handleMessageXp(message).catch(err => {
+        console.error('Level/XP qayta ishlashda xatolik:', err.message);
+      });
     }
 
     // 4. KUNLIK FAOLLIK ROLI TIZIMI (Active Role)

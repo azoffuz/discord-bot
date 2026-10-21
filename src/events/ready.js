@@ -1,4 +1,5 @@
 const { ActivityType, Routes, Events } = require('discord.js');
+const { startVoiceXpTicker } = require('../utils/levelManager');
 
 module.exports = {
   name: Events.ClientReady,
@@ -52,6 +53,9 @@ module.exports = {
     // 4. YouTube kanallari yangi videolarini avtomatik tekshirib borish
     const { initYouTubeNotifier } = require('../utils/youtubeNotifier');
     initYouTubeNotifier(client);
+
+    // 4.1. Ovozli xonadagi a'zolarga har daqiqada XP berish (Level tizimi)
+    startVoiceXpTicker(client);
 
     // 5. Kunlik faollik rolini tekshirish va kirmaganlardan olib tashlash (har 15 daqiqada)
     const { evaluateDailyInactivity } = require('../utils/activityTracker');

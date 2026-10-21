@@ -22,7 +22,7 @@ module.exports = {
         },
         {
           name: '⚙️ Server Sozlamalari (15 ta tizim)',
-          value: '`/set-active-role`, `/set-team-archive-chat`, `/setup-core`, `/set-log`, `/set-welcome`, `/set-ticket`, `/set-autorole`, `/set-verify`, `/set-antilink`, `/set-media-roles`, `/set-stats`, `/set-tempvoice`, `/set-level`, `/set-youtube` (`/set-video`)',
+          value: '`/set-active-role`, `/set-team-archive-chat`, `/setup-core`, `/set-log`, `/set-welcome`, `/set-ticket`, `/set-autorole`, `/set-verify`, `/set-antilink`, `/set-media-roles`, `/set-stats`, `/set-tempvoice`, `/set-level`, `/set-level-rewards`, `/set-level-multiplier`, `/xp`, `/set-youtube` (`/set-video`)',
           inline: false
         },
         {
@@ -159,8 +159,20 @@ module.exports = {
             value: 'Avtomatik shaxsiy ovozli xonalar ("Join to Create"). "➕ Xona Yaratish" ga kirganda yangi xona ochib beradi va bo\'shagach o\'chiradi.'
           },
           {
-            name: '`/set-level status:[Yoqish/O\'chirish] [channel]`',
-            value: 'Chatda yozish orqali tajriba (Level & XP) to\'plash tizimini yoqish yoki o\'chirish.'
+            name: '`/set-level [status] [channel] [voice_xp] [announce] [message] [announce_every]`',
+            value: 'Chatda yozish va ovozli xonada suhbatlashish orqali tajriba (Level & XP) to\'plash tizimini sozlash. E\'lon joyi (kanal/DM/o\'chiq), matni ({user} {level} {role}...) va har necha darajada e\'lon qilinishi. Parametrsiz - joriy sozlamalar.'
+          },
+          {
+            name: '`/set-level-multiplier [role/channel/event/event-stop/remove/list]`',
+            value: 'Rol, kanal (yoki kategoriya) va butun server tadbiri uchun XP ko\'paytiruvchisi. 0 - shu rol/kanalda XP berilmaydi.'
+          },
+          {
+            name: '`/set-level-rewards [add/remove/mode/list]`',
+            value: 'Ma\'lum darajaga yetgan a\'zolarga avtomatik rol berish. Rejim: barcha mukofot rollari qoladi yoki faqat eng yuqorisi.'
+          },
+          {
+            name: '`/xp [give/remove/set/reset/reset-all]`',
+            value: 'A\'zolarning XP va darajasini qo\'lda boshqarish. Har bir o\'zgarish moderatsiya logiga yoziladi, mukofot rollari yangi darajaga moslashtiriladi.'
           },
           {
             name: '`/set-media-roles [status] [add_role] [remove_role] [clear_all]`',
@@ -223,8 +235,8 @@ module.exports = {
             value: 'O\'zingizning yoki boshqa a\'zoning darajasi (Level), tajribasi (XP), serverdagi o\'rni va progress barini ko\'rish.'
           },
           {
-            name: '`/leaderboard`',
-            value: 'Serverdagi eng faol a\'zolar TOP-10 reytingi va darajalarini ko\'rish.'
+            name: '`/leaderboard [period] [type]`',
+            value: 'Eng faol a\'zolar reytingi: barcha vaqt, shu oy yoki shu hafta; XP, xabarlar yoki ovozli xona bo\'yicha. Sahifalab ko\'rish mumkin.'
           },
           {
             name: '`/avatar [type] [user]`',
